@@ -1,5 +1,5 @@
 import ast
-
+from analyzer_exp import analyze_call
 def analyze_for(node, indent_level):
 
     assert(isinstance(node, ast.For))
@@ -24,7 +24,6 @@ def analyze_for(node, indent_level):
         token_list.append("]")
 
     token_list.append("in")
-    print(node.iter)
     if isinstance(node.iter, ast.Call):
-        print(node.iter.func.id)
+        token_list.extend(analyze_call(node.iter))
     return token_list

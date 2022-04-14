@@ -2,7 +2,10 @@ import unittest
 import os
 import ast
 import astor
-from analyzer_cls import analyze_class, analyze_func
+from analyzer_cls import analyze_class
+from analyzer_func import analyze_func
+from analyzer_exp import analyze_call
+
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 class TestAnalayzer(unittest.TestCase):
@@ -40,6 +43,51 @@ class TestAnalayzer(unittest.TestCase):
         for t in ast.walk(tree):
             if isinstance(t, ast.FunctionDef):
                 self.assertListEqual(correct_list, analyze_func(t))
+    def test_call_exp1(self):
+        tree = ast.parse("func(a)")
+        child = list(ast.iter_child_nodes(tree))
+        call = list(ast.iter_child_nodes(child[0]))
+
+        correct_list = ['func', '(', 'a', ')']
+        if isinstance(call[0], ast.Call):
+            self.assertListEqual(correct_list, analyze_call(call[0]))
+    
+
+    def test_call_exp2(self):
+        tree = ast.parse("func(a, b=c, *d, **e)")
+        child = list(ast.iter_child_nodes(tree))
+        call = list(ast.iter_child_nodes(child[0]))
+
+        correct_list = ['func', '(', 'a', ',', 'b', '=', 'c', ',', '*', 'd', ',', '**', 'e', ')']
+        if isinstance(call[0], ast.Call):
+            self.assertListEqual(correct_list, analyze_call(call[0]))
+    
+    def test_call_exp3(self):
+        tree = ast.parse("func(a, b)")
+        child = list(ast.iter_child_nodes(tree))
+        call = list(ast.iter_child_nodes(child[0]))
+
+        correct_list = ['func', '(', 'a', ',', 'b', ')']
+        if isinstance(call[0], ast.Call):
+            self.assertListEqual(correct_list, analyze_call(call[0]))
+    
+    def test_call_exp4(self):
+        tree = ast.parse("func(a, b=1)")
+        child = list(ast.iter_child_nodes(tree))
+        call = list(ast.iter_child_nodes(child[0]))
+
+        correct_list = ['func', '(', 'a', ',', 'b', '=', '1',')']
+        if isinstance(call[0], ast.Call):
+            self.assertListEqual(correct_list, analyze_call(call[0]))
+      
+    def test_call_exp5(self):
+        tree = ast.parse("func(a, *args, **kwargs)")
+        child = list(ast.iter_child_nodes(tree))
+        call = list(ast.iter_child_nodes(child[0]))
+
+        correct_list = ['func', '(', 'a', ',', '*', 'args', ',','**', 'kwargs', ')']
+        if isinstance(call[0], ast.Call):
+            self.assertListEqual(correct_list, analyze_call(call[0]))  
 
     def test_run(self):
         path = os.path.join(dir_path, "test_case/test1.py") 
