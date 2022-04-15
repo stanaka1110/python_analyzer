@@ -1,6 +1,6 @@
 import ast
 from analyzer_exp import analyze_call
-
+from analyzer_context import analyze_name
 
 def analyze_for(node, indent_level):
 
@@ -9,7 +9,7 @@ def analyze_for(node, indent_level):
     token_list.append("for")
     target = node.target
     if isinstance(target, ast.Name):
-        token_list.append(target.id)
+        token_list.extend(analyze_name(target))
     elif isinstance(target, ast.Tuple):
         child = list(target.elts)
         token_list.append(child[0].id)
@@ -52,7 +52,7 @@ def analyze_delete(node):
     for idx, t in enumerate(target_list):
         if idx != 0:
             token_list.append(",")
-        token_list.append(t.id)
+        token_list.extend(analyze_name(t))
     return token_list
 
 def analyze_assign(node):
@@ -65,7 +65,7 @@ def analyze_assign(node):
         for idx, t in enumerate(target_list):
             if idx != 0:
                 token_list.append("=")
-            token_list.append(t.id)
+            token_list.extend(analyze_name(t))
     elif isinstance(target_list[0], ast.Tuple):
         target_list = list(target_list[0].elts)
         for idx, t in enumerate(target_list):
@@ -77,11 +77,15 @@ def analyze_assign(node):
     if isinstance(value, ast.Constant):
         token_list.append(str(value.value))
     elif isinstance(value, ast.Name):
-        token_list.append(value.id)
+        token_list.extend(analyze_name(value))
     
     return token_list
 
 def analyze_annasign(node):
     assert(isinstance(node, ast.AnnAssign))
     token_list = []
+
+    target = node.target
+    if isinstance(target, ast.Name):
+        print()
     return token_list
