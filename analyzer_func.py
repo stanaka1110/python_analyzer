@@ -1,6 +1,6 @@
 import ast
 from analyzer_stmt import analyze_for
-from analyzer_exp import analyze_return
+from analyzer_stmt import analyze_return
 
 def analyze_func(node, indent_level=1):
     assert(isinstance(node, ast.FunctionDef))

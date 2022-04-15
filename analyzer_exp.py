@@ -54,13 +54,4 @@ def analyze_call(node):
     token_list.append(")")
 
     return token_list
-def analyze_return(node):
-    assert(isinstance(node, ast.Return))
-    token_list = []
 
-    token_list.append("return")
-
-    val = node.value.value
-    token_list.append(str(val))
-
-    return token_list
