@@ -27,7 +27,7 @@ def analyze_class(node, indent_level=1):
     body_list = list(node.body)
     for body in body_list:
         if isinstance(body, ast.FunctionDef):
-            token_list.extend(analyze_func(body, indent_level=2))
+            token_list.extend(analyze_func(body, indent_level=indent_level+1))
 
     return token_list
 

@@ -1,5 +1,5 @@
 import ast
-from analyzer_context import analyze_name
+from analyzer_context import analyze_attribute, analyze_constant, analyze_name
 def analyze_call(node):
     assert(isinstance(node, ast.Call))
     token_list = []
@@ -16,10 +16,7 @@ def analyze_call(node):
             token_list.append(",")
         
         if isinstance(a, ast.Attribute):
-            token_list.append(a.value.id)
-            token_list.append(".")
-            token_list.append(a.attr)
-        
+            token_list.extend(analyze_attribute(a))
         elif isinstance(a, ast.Name):
             token_list.extend(analyze_name(a))
         
@@ -44,7 +41,7 @@ def analyze_call(node):
             if isinstance(k.value, ast.Name):
                 token_list.extend(analyze_name(k.value))
             elif isinstance(k.value, ast.Constant):
-                token_list.append(str(k.value.value))
+                token_list.extend(analyze_constant(k.value))
         else:
             token_list.extend(tmp_list)
             token_list.append(",")

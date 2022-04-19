@@ -5,7 +5,8 @@ import astor
 from analyzer_cls import analyze_class
 from analyzer_func import analyze_func
 from analyzer_exp import analyze_call
-from analyzer_stmt import analyze_annasign, analyze_delete, analyze_assign
+from analyzer_stmt import analyze_annasign, analyze_delete, analyze_assign, analyze_annasign
+from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_tuple
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -139,13 +140,57 @@ class TestAnalayzer(unittest.TestCase):
         correct_list = ['a', ',', 'b', ',', 'd', '=', '3']
         if isinstance(child[0], ast.Assign):
             self.assertListEqual(correct_list, analyze_assign(child[0]))
-    
+    def test_assign_stmt6(self):
+        tree = ast.parse("a[6] = 3")
+        child = list(ast.iter_child_nodes(tree))
+        correct_list = ['a', '[', '6', ']', '=', '3']
+        if isinstance(child[0], ast.Assign):
+            self.assertListEqual(correct_list, analyze_assign(child[0]))
     def test_annassign_stmt1(self):
         tree = ast.parse("c: int")
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.AnnAssign)
         correct_list = ['c', ':', 'int']
         self.assertListEqual(correct_list, analyze_annasign(child[0]))
+
+    def test_annassign_stmt2(self):
+        tree = ast.parse("a.b: int")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.AnnAssign)
+        correct_list = ['a', '.', 'b', ':', 'int']
+        self.assertListEqual(correct_list, analyze_annasign(child[0]))
+
+    def test_attribute_context1(self):
+        tree = ast.parse("snake.colour")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Attribute)
+        correct_list = ['snake', '.', 'colour']
+        self.assertListEqual(correct_list, analyze_attribute(child[0]))
+
+    def test_attribute_context2(self):
+        tree = ast.parse("snake.colour.red")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Attribute)
+        correct_list = ['snake', '.', 'colour', '.', 'red']
+        self.assertListEqual(correct_list, analyze_attribute(child[0]))
+    
+    def test_constant_context1(self):
+        tree = ast.parse("1")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Constant)
+        correct_list = ['1']
+        self.assertListEqual(correct_list, analyze_constant(child[0]))
+
+    def test_tuple_context1(self):
+        tree = ast.parse("(1, 2, 3)")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Tuple)
+        correct_list = ['1', ',', '2', ',', '3']
+        self.assertListEqual(correct_list, analyze_tuple(child[0]))
 
 if __name__ == '__main__':
     unittest.main()
