@@ -1,5 +1,5 @@
 import ast
-from analyzer_context import analyze_attribute, analyze_constant, analyze_name, analyze_tuple
+from analyzer_context import analyze_attribute, analyze_constant, analyze_name, analyze_slice, analyze_tuple
 def analyze_call(node):
     assert(isinstance(node, ast.Call))
     token_list = []
@@ -57,15 +57,19 @@ def analyze_subscript(node):
     token_list = []
     token_list.extend(analyze_name(node.value))
     token_list.append("[")
-    slice_list = list(ast.iter_child_nodes(node.slice))
-    for idx, s in enumerate(slice_list):
-        if idx != 0:
-            token_list.append(",")
-        
-        if isinstance(s, ast.Constant):
-            token_list.extend(analyze_constant(s))
-        elif isinstance(s, ast.Tuple):
-            token_list.extend(analyze_tuple(s))
-
+    if isinstance(node.slice, ast.Index):
+        slice_list = list(ast.iter_child_nodes(node.slice))
+        for idx, s in enumerate(slice_list):
+            if idx != 0:
+                token_list.append(",")
+            
+            if isinstance(s, ast.Constant):
+                token_list.extend(analyze_constant(s))
+            elif isinstance(s, ast.Tuple):
+                token_list.extend(analyze_tuple(s))
+            elif isinstance(s, ast.Slice):
+                token_list.extend(analyze_slice(s))
+    elif isinstance(node.slice, ast.Slice):
+        token_list.extend(analyze_slice(node.slice))
     token_list.append("]")
     return token_list

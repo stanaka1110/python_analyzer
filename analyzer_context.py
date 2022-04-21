@@ -55,3 +55,20 @@ def analyze_list(node):
     
     token_list.append("]")
     return token_list
+
+def analyze_slice(node):
+    assert(node, ast.Slice)
+    token_list = []
+    l = node.lower
+    u = node.upper
+    if isinstance(l, ast.Name):
+        token_list.extend(analyze_name(l))
+    elif isinstance(l, ast.Constant):
+        token_list.extend(analyze_constant(l))
+    token_list.append(":")
+    if isinstance(u, ast.Name):
+        token_list.extend(analyze_name(u))
+    
+    elif isinstance(u, ast.Constant):
+        token_list.extend(analyze_constant(u))
+    return token_list

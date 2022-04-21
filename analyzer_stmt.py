@@ -1,5 +1,5 @@
 import ast
-from analyzer_exp import analyze_call
+from analyzer_exp import analyze_call, analyze_subscript
 from analyzer_context import analyze_attribute, analyze_name, analyze_tuple
 
 def analyze_for(node, indent_level):
@@ -65,12 +65,16 @@ def analyze_assign(node):
             token_list.extend(analyze_name(t))
     elif isinstance(target_list[0], ast.Tuple):
         token_list.extend(analyze_tuple(target_list[0]))
+    elif isinstance(target_list[0], ast.Subscript):
+        token_list.extend(analyze_subscript(target_list[0]))
     token_list.append("=")
     value = node.value
     if isinstance(value, ast.Constant):
         token_list.append(str(value.value))
     elif isinstance(value, ast.Name):
         token_list.extend(analyze_name(value))
+    elif isinstance(value, ast.Subscript):
+        token_list.extend(analyze_subscript(value))
     
     return token_list
 
@@ -85,4 +89,10 @@ def analyze_annasign(node):
         token_list.extend(analyze_attribute(target))
     token_list.append(":")
     token_list.extend(analyze_name(node.annotation))
+    return token_list
+
+def analyze_augassign(node):
+    assert(isinstance(node, ast.AugAssign))
+    token_list = []
+    
     return token_list
