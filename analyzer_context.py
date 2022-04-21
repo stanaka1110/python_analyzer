@@ -43,5 +43,15 @@ def analyze_list(node):
     assert(isinstance(node, ast.List))
 
     token_list = []
+    token_list.append("[")
+    elts_list = node.elts
+    for idx, e in enumerate(elts_list):
+        if idx != 0:
+            token_list.append(",")
+        if isinstance(e, ast.Name):
+            token_list.extend(analyze_name(e))
+        elif isinstance(e, ast.Constant):
+            token_list.extend(analyze_constant(e))
     
+    token_list.append("]")
     return token_list

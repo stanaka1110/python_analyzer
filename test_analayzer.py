@@ -4,9 +4,9 @@ import ast
 import astor
 from analyzer_cls import analyze_class
 from analyzer_func import analyze_func
-from analyzer_exp import analyze_call
+from analyzer_exp import analyze_call, analyze_subscript
 from analyzer_stmt import analyze_annasign, analyze_delete, analyze_assign, analyze_annasign
-from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_tuple
+from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_list, analyze_tuple
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -191,6 +191,48 @@ class TestAnalayzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.Tuple)
         correct_list = ['1', ',', '2', ',', '3']
         self.assertListEqual(correct_list, analyze_tuple(child[0]))
+    
+    def test_list_context1(self):
+        tree = ast.parse("[1, 2]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+
+        self.assertIsInstance(child[0], ast.List)
+        correct_list = ['[', '1', ',', '2', ']']
+        self.assertListEqual(correct_list, analyze_list(child[0]))
+    
+    def test_list_context2(self):
+        tree = ast.parse("[a, 2]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+
+        self.assertIsInstance(child[0], ast.List)
+        correct_list = ['[', 'a', ',', '2', ']']
+        self.assertListEqual(correct_list, analyze_list(child[0]))
+
+    def test_subscript_cotext1(self):
+        tree = ast.parse("a[0]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Subscript)
+        correct_list = ['a', '[', '0', ']']
+        self.assertListEqual(correct_list, analyze_subscript(child[0]))
+    
+    def test_subscript_context2(self):
+        tree = ast.parse("a[1, 3]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Subscript)
+        correct_list = ['a', '[', '1', ',', '3', ']']
+        self.assertListEqual(correct_list, analyze_subscript(child[0]))
+    
+    def test_subscript_context3(self):
+        tree = ast.parse("a[1:3]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Subscript)
+        correct_list = ['a', '[', '1', ':', '3', ']']
+        self.assertListEqual(correct_list, analyze_subscript(child[0]))
 
 if __name__ == '__main__':
     unittest.main()
