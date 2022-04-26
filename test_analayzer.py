@@ -1,3 +1,4 @@
+from turtle import circle
 import unittest
 import os
 import ast
@@ -6,7 +7,7 @@ from analyzer_cls import analyze_class
 from analyzer_func import analyze_func
 from analyzer_exp import analyze_call, analyze_subscript
 from analyzer_stmt import analyze_annasign, analyze_augassign, analyze_delete, analyze_assign, analyze_annasign
-from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_list, analyze_tuple
+from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_list, analyze_op, analyze_tuple
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -104,8 +105,7 @@ class TestAnalayzer(unittest.TestCase):
         correct_list = ['del', 'a', ',', 'b', ',', 'c']
         if isinstance(child[0], ast.Delete):
             self.assertListEqual(correct_list, analyze_delete(child[0]))
-        
-    
+            
     def test_assign_stmt1(self):
         tree = ast.parse("a = b = 1")
         child = list(ast.iter_child_nodes(tree))
@@ -175,6 +175,18 @@ class TestAnalayzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.AugAssign)
         correct_list = ['x', '+', '=', '2']
         self.assertListEqual(correct_list, analyze_augassign(child[0]))
+    
+    def test_augassign_stmt2(self):
+        tree = ast.parse("x /= 2")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.AugAssign)
+        correct_list = ['x', '/', '=', '2']
+        self.assertListEqual(correct_list, analyze_augassign(child[0]))
+    def test_op_context1(self):
+        tree = ast.parse("1+1")
+        child = list(ast.iter_child_nodes(tree))
+        correct_list = ['1', '+', '1']
+        self.assertListEqual(correct_list, analyze_op(child[0]))
     def test_attribute_context1(self):
         tree = ast.parse("snake.colour")
         child = list(ast.iter_child_nodes(tree))
