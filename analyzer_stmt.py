@@ -1,8 +1,9 @@
 import ast
 import token
 import warnings
-from analyzer_exp import analyze_call, analyze_subscript
-from analyzer_context import analyze_attribute, analyze_constant, analyze_name, analyze_op, analyze_tuple
+from analyzer_exp import analyze_call, analyze_subscript, analyze_name, analyze_attribute, analyze_constant, analyze_tuple
+from analyzer_context import analyze_bin_op_tks
+
 
 def analyze_function_def(node, indent_level=1):
     warnings.warn("function_def deprecation", DeprecationWarning)
@@ -146,7 +147,7 @@ def analyze_augassign(node):
     if isinstance(node.target, ast.Name):
         token_list.extend(analyze_name(node.target))
     
-    token_list.extend(analyze_op(node.op))
+    token_list.extend(analyze_bin_op_tks(node.op))
     token_list.append("=")
 
     if isinstance(node.value, ast.Constant):
@@ -260,7 +261,7 @@ def analyze_nonlocal(node):
     return token_list
 
 def analyze_expr(node):
-    warnings.wanr("expr deprecation", DeprecationWarning)
+    warnings.warn("expr deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Expr))
     token_list = []
     return token_list

@@ -34,7 +34,17 @@ def analyze_op(node):
         token_list.append("&")
     elif isinstance(node, ast.MatMult):
         token_list.append("@")
-    
+    elif isinstance(node, ast.Or):
+        token_list.append("or")
+    elif isinstance(node, ast.And):
+        token_list.append("and")
+    elif isinstance(node, ast.UAdd):
+        token_list.append("+")
+    elif isinstance(node, ast.USub):
+        token_list.append("-")
+    elif isinstance(node, ast.Not):
+        token_list.append("not")
+    elif isinstance(node, ast.Invert):
+        token_list.append("~")
     return token_list
-
 

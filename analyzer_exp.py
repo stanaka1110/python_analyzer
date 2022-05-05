@@ -1,22 +1,36 @@
 import ast
 import warnings
-
+from analyzer_context import analyze_op
 def analyze_bool_op(node):
     warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
     token_list = []
+    values = node.values
+    if len(values) < 3:
+        token_list.extend(analyze_name(values[0]))
+        token_list.extend(analyze_op(node.op))
+        token_list.extend(analyze_name(values[1]))
+    
     return token_list
 
 def analyze_named_expr(node):
-    warnings.warn("named expr deprecation", DeprecationWarning)
     assert(isinstance(node, ast.NamedExpr))
     token_list = []
+    token_list.append("(")
+    token_list.extend(analyze_name(node.target))
+    token_list.append(":")
+    token_list.append("=")
+    token_list.extend(analyze_constant(node.value))
+    token_list.append(")")
     return token_list
 
 def analyze_bin_op(node):
     warnings.warn("bin op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BinOp))
     token_list = []
+    token_list.extend(analyze_name(node.left))
+    token_list.extend(analyze_op(node.op))
+    token_list.extend(analyze_name(node.right))
     return token_list
 
 def analyze_unary_op(node):
@@ -35,6 +49,12 @@ def analyze_if_exp(node):
     warnings.warn("if exp deprecation", DeprecationWarning)
     assert(isinstance(node, ast.IfExp))
     token_list = []
+    test = node.test
+    body = node.body
+    orelse = node.orelse
+    token_list.extend(analyze_name(test))
+    token_list.extend(analyze_name(body))
+    token_list.extend(analyze_name(orelse))
     return token_list
 
 def analyze_dict(node):

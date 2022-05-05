@@ -1,14 +1,13 @@
-from turtle import circle
+
 import unittest
 import os
 import ast
-import astor
-from analyzer_cls import analyze_class
-from analyzer_func import analyze_func
-from analyzer_exp import analyze_call, analyze_subscript
-from analyzer_stmt import analyze_annasign, analyze_augassign, analyze_delete, analyze_assign, analyze_annasign
-from python_analyzer.analyzer_context import analyze_attribute, analyze_constant, analyze_list, analyze_op, analyze_tuple
 
+
+from analyzer_exp import analyze_bool_op, analyze_call, analyze_if_exp, analyze_named_expr, analyze_subscript, analyze_list, analyze_bin_op
+from analyzer_stmt import analyze_annasign, analyze_augassign, analyze_class_def, analyze_delete, analyze_assign,  analyze_function_def, analyze_tuple, analyze_attribute, analyze_constant
+
+from analyzer_context import analyze_op
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 class TestAnalayzer(unittest.TestCase):
@@ -22,7 +21,7 @@ class TestAnalayzer(unittest.TestCase):
         tree = ast.parse(src)
         for t in ast.walk(tree):
             if isinstance(t, ast.ClassDef):
-                self.assertListEqual(analyze_class(t), correct_list)     
+                self.assertListEqual(analyze_class_def(t), correct_list)     
 
     def test_class_sample(self):
         path = os.path.join(dir_path, "test_case/test1.py")
@@ -32,7 +31,7 @@ class TestAnalayzer(unittest.TestCase):
         correct_list = ['class', 'Base', ':', '\n', '\t', 'def', 'test', '(', ')', ':', '\n', '\t', '\t', 'return', '0']
         for t in ast.walk(tree):
             if isinstance(t, ast.ClassDef):
-                self.assertListEqual(correct_list, analyze_class(t))
+                self.assertListEqual(correct_list, analyze_class_def(t))
     
     def test_func_sample(self):
         path = os.path.join(dir_path, "test_case/test3.py")
@@ -45,7 +44,7 @@ class TestAnalayzer(unittest.TestCase):
 
         for t in ast.walk(tree):
             if isinstance(t, ast.FunctionDef):
-                self.assertListEqual(correct_list, analyze_func(t))
+                self.assertListEqual(correct_list, analyze_function_def(t))
     def test_call_exp1(self):
         tree = ast.parse("func(a)")
         child = list(ast.iter_child_nodes(tree))
@@ -182,11 +181,14 @@ class TestAnalayzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.AugAssign)
         correct_list = ['x', '/', '=', '2']
         self.assertListEqual(correct_list, analyze_augassign(child[0]))
+
     def test_op_context1(self):
         tree = ast.parse("1+1")
         child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
         correct_list = ['1', '+', '1']
-        self.assertListEqual(correct_list, analyze_op(child[0]))
+        self.assertListEqual(correct_list, analyze_bin_op(child[0]))
+    
     def test_attribute_context1(self):
         tree = ast.parse("snake.colour")
         child = list(ast.iter_child_nodes(tree))
@@ -261,13 +263,41 @@ class TestAnalayzer(unittest.TestCase):
         correct_list = ['a', '[', '1', ':', '3', ']']
         self.assertListEqual(correct_list, analyze_subscript(child[0]))
     
-    def test_subscript_context3(self):
-        tree = ast.parse("a[b:3]")
+    def test_bool_op_exp1(self):
+        tree = ast.parse("x or y")
         child = list(ast.iter_child_nodes(tree))
         child = list(ast.iter_child_nodes(child[0]))
-        self.assertIsInstance(child[0], ast.Subscript)
-        correct_list = ['a', '[', 'b', ':', '3', ']']
-        self.assertListEqual(correct_list, analyze_subscript(child[0]))
-
+        self.assertIsInstance(child[0], ast.BoolOp)
+        correct_list = ['x', 'or', 'y']
+        self.assertListEqual(correct_list, analyze_bool_op(child[0]))
+    
+    def test_bool_op_exp2(self):
+        tree = ast.parse("x or y or z")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.BoolOp)
+        correct_list = ['x', 'or', 'y', 'and', 'z']
+        self.assertListEqual(correct_list, analyze_bool_op(child[0]))
+    
+    def test_named_expr_exp1(self):
+        tree = ast.parse("(x := 4)")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        correct_list = ['(', 'x', ':', '=', '4', ')']
+        self.assertListEqual(correct_list, analyze_named_expr(child[0]))
+    
+    def test_bin_op_exp1(self):
+        tree = ast.parse("x + y")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        correct_list = ['x', '+', 'y']
+        self.assertListEqual(correct_list, analyze_bin_op(child[0]))
+    
+    def test_if_exp_exp1(self):
+        tree = ast.parse("a if b else c")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        correct_list = ['a', 'if', 'b', 'else', 'c']
+        self.assertListEqual(correct_list, analyze_if_exp(child[0]))
 if __name__ == '__main__':
     unittest.main()
