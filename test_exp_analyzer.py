@@ -3,7 +3,7 @@ import unittest
 import os
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple
+from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

@@ -1,15 +1,16 @@
 import ast
 import warnings
 
+from analyzer_context import analyze_op
 def analyze_bool_op(node):
     warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
     token_list = []
     values = node.values
-    if len(values) < 3:
-        token_list.extend(analyze_name(values[0]))
+    for idx, v in enumerate(values):
+
+        token_list.extend(analyze_name(v))
         token_list.extend(analyze_op(node.op))
-        token_list.extend(analyze_name(values[1]))
     
     return token_list
 

@@ -1,6 +1,6 @@
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_constant, analyze_list, analyze_name, analyze_subscript, analyze_tuple
+# from analyzer_exp import analyze_attribute, analyze_constant, analyze_list, analyze_name, analyze_subscript, analyze_tuple
 
 def analyze_op(node):
 
