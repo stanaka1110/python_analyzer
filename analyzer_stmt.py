@@ -1,10 +1,8 @@
 import ast
-import token
 import warnings
-from analyzer_exp import analyze_call, analyze_subscript, analyze_name, analyze_attribute, analyze_constant, analyze_tuple
-from analyzer_context import analyze_bin_op_tks
 
-
+from analyzer_context import analyze_value, analyze_op
+from analyzer_exp import analyze_call
 def analyze_function_def(node, indent_level=1):
     warnings.warn("function_def deprecation", DeprecationWarning)
     assert(isinstance(node, ast.FunctionDef))
@@ -99,7 +97,7 @@ def analyze_delete(node):
     for idx, t in enumerate(target_list):
         if idx != 0:
             token_list.append(",")
-        token_list.extend(analyze_name(t))
+        token_list.extend(analyze_value(t))
     return token_list
 
 def analyze_assign(node):
@@ -107,24 +105,22 @@ def analyze_assign(node):
 
     token_list = []
     target_list = list(node.targets)
-
-    if isinstance(target_list[0], ast.Name):
-        for idx, t in enumerate(target_list):
-            if idx != 0:
-                token_list.append("=")
-            token_list.extend(analyze_name(t))
-    elif isinstance(target_list[0], ast.Tuple):
-        token_list.extend(analyze_tuple(target_list[0]))
-    elif isinstance(target_list[0], ast.Subscript):
-        token_list.extend(analyze_subscript(target_list[0]))
+    for idx, t in enumerate(target_list):
+        if idx != 0:
+            token_list.append("=")
+        token_list.extend(analyze_value(t))
+    # if isinstance(target_list[0], ast.Name):
+    #     for idx, t in enumerate(target_list):
+    #         if idx != 0:
+    #             token_list.append("=")
+    #         token_list.extend(analyze_name(t))
+    # elif isinstance(target_list[0], ast.Tuple):
+    #     token_list.extend(analyze_tuple(target_list[0]))
+    # elif isinstance(target_list[0], ast.Subscript):
+    #     token_list.extend(analyze_subscript(target_list[0]))
     token_list.append("=")
     value = node.value
-    if isinstance(value, ast.Constant):
-        token_list.append(str(value.value))
-    elif isinstance(value, ast.Name):
-        token_list.extend(analyze_name(value))
-    elif isinstance(value, ast.Subscript):
-        token_list.extend(analyze_subscript(value))
+    token_list.extend(analyze_value(value))
     
     return token_list
 
@@ -133,25 +129,21 @@ def analyze_annasign(node):
     token_list = []
 
     target = node.target
-    if isinstance(target, ast.Name):
-        token_list.extend(analyze_name(target))
-    elif isinstance(target, ast.Attribute):
-        token_list.extend(analyze_attribute(target))
+    token_list.extend(analyze_value(target))
     token_list.append(":")
-    token_list.extend(analyze_name(node.annotation))
+    token_list.extend(analyze_value(node.annotation))
     return token_list
 
 def analyze_augassign(node):
     assert(isinstance(node, ast.AugAssign))
     token_list = []
-    if isinstance(node.target, ast.Name):
-        token_list.extend(analyze_name(node.target))
+    token_list.extend(analyze_value(node.target))
     
-    token_list.extend(analyze_bin_op_tks(node.op))
+    token_list.extend(analyze_op(node.op))
     token_list.append("=")
 
-    if isinstance(node.value, ast.Constant):
-        token_list.extend(analyze_constant(node.value))
+
+    token_list.extend(analyze_value(node.value))
 
     return token_list
 
@@ -161,19 +153,20 @@ def analyze_for(node, indent_level):
     token_list = []
     token_list.append("for")
     target = node.target
-    if isinstance(target, ast.Name):
-        token_list.extend(analyze_name(target))
-    elif isinstance(target, ast.Tuple):
-        child = list(target.elts)
-        token_list.extend(analyze_tuple(child))
-    elif isinstance(target, ast.List):
-        token_list.append("[")
+    token_list.extend(analyze_value(target))
+    # if isinstance(target, ast.Name):
+    #     token_list.extend(analyze_name(target))
+    # elif isinstance(target, ast.Tuple):
+    #     child = list(target.elts)
+    #     token_list.extend(analyze_tuple(child))
+    # elif isinstance(target, ast.List):
+    #     token_list.append("[")
 
-        child = list(target.elts)
-        for c in child[1:]:
-            token_list.append(",")
-            token_list.append(c.id)
-        token_list.append("]")
+    #     child = list(target.elts)
+    #     for c in child[1:]:
+    #         token_list.append(",")
+    #         token_list.append(c.id)
+    #     token_list.append("]")
 
     token_list.append("in")
     if isinstance(node.iter, ast.Call):

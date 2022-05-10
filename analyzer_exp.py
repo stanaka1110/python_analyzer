@@ -1,6 +1,6 @@
 import ast
 import warnings
-from analyzer_context import analyze_op
+
 def analyze_bool_op(node):
     warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
