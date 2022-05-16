@@ -2,6 +2,7 @@ import ast
 import warnings
 
 from analyzer_context import analyze_op
+
 def analyze_bool_op(node):
     warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
@@ -9,7 +10,7 @@ def analyze_bool_op(node):
     values = node.values
     for idx, v in enumerate(values):
 
-        token_list.extend(analyze_name(v))
+        token_list.extend(analyze_value(v))
         token_list.extend(analyze_op(node.op))
     
     return token_list
@@ -18,32 +19,52 @@ def analyze_named_expr(node):
     assert(isinstance(node, ast.NamedExpr))
     token_list = []
     token_list.append("(")
-    token_list.extend(analyze_name(node.target))
+    token_list.extend(analyze_value(node.target))
     token_list.append(":")
     token_list.append("=")
-    token_list.extend(analyze_constant(node.value))
+    token_list.extend(analyze_value(node.value))
     token_list.append(")")
     return token_list
 
 def analyze_bin_op(node):
     warnings.warn("bin op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BinOp))
+    child = list(ast.iter_child_nodes(node))
     token_list = []
-    token_list.extend(analyze_name(node.left))
+    if isinstance(child[0], ast.BinOp):
+        token_list.extend(analyze_bin_op(child[0]))
+    else:
+        token_list.extend(analyze_value(node.left))
     token_list.extend(analyze_op(node.op))
-    token_list.extend(analyze_name(node.right))
+    token_list.extend(analyze_value(node.right))
     return token_list
 
 def analyze_unary_op(node):
-    warnings.warn("unary op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.UnaryOp))
     token_list = []
+    token_list.extend(analyze_op(node.op))
+    token_list.extend(analyze_value(node.operand))
     return token_list
 
 def analyze_lambda(node):
     warnings.warn("lambda deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Lambda))
     token_list = []
+
+    token_list.append("lambda")
+    # どの位置にイコールが入るかわからないため放置
+    args_list = node.args.args
+    defalut_list = node.args.defaults
+    if len(args_list) != 0:
+        token_list.append(args_list[0].arg)
+        for a, d in zip(args_list[1:], defalut_list):
+            token_list.append(",")
+            token_list.append(a.arg)
+            token_list.append("=")
+            token_list.extend(analyze_value(d))
+            
+    token_list.append(":")
+    token_list.extend(analyze_expr(node.body))
     return token_list
 
 def analyze_if_exp(node):
@@ -279,4 +300,84 @@ def analyze_slice(node):
     
     elif isinstance(u, ast.Constant):
         token_list.extend(analyze_constant(u))
+    return token_list
+
+
+def analyze_value(node):
+    token_list = []
+    if isinstance(node, ast.Attribute):
+        token_list.extend(analyze_attribute(node))
+    elif isinstance(node, ast.Constant):
+        token_list.extend(analyze_constant(node))
+    elif isinstance(node, ast.Name):
+        token_list.extend(analyze_name(node))
+    elif isinstance(node, ast.Tuple):
+        token_list.extend(analyze_tuple(node))
+    elif isinstance(node, ast.List):
+        token_list.extend(analyze_list(node))
+    elif isinstance(node, ast.Subscript):
+        token_list.extend(analyze_subscript(node))
+    else:
+        print("error")
+        exit()
+    
+    return token_list
+
+def analyze_expr(node):
+    token_list = []
+
+    if isinstance(node, ast.BoolOp):
+        token_list.extend(analyze_bool_op(node))
+    elif isinstance(node, ast.NamedExpr):
+        token_list.extend(analyze_named_expr(node))
+    elif isinstance(node, ast.BinOp):
+        token_list.extend(analyze_bin_op(node))        
+    elif isinstance(node, ast.UnaryOp):
+        token_list.extend(analyze_unary_op(node))
+    elif isinstance(node, ast.Lambda):
+        token_list.extend(analyze_lambda(node))
+    elif isinstance(node, ast.IfExp):
+        token_list.extend(analyze_if_exp(node))
+    elif isinstance(node, ast.Dict):
+        token_list.extend(analyze_dict(node))
+    elif isinstance(node, ast.Set):
+        token_list.extend(analyze_set(node))
+    elif isinstance(node, ast.ListComp):
+        token_list.extend(analyze_list_comp(node))
+    elif isinstance(node, ast.SetComp):
+        token_list.extend(analyze_set_comp(node))
+    elif isinstance(node, ast.DictComp):
+        token_list.extend(analyze_dict_comp(node))
+    elif isinstance(node, ast.GeneratorExp):
+        token_list.extend(analyze_generator_exp(node))
+    elif isinstance(node, ast.Await):
+        token_list.extend(analyze_await(node))
+    elif isinstance(node, ast.Yield):
+        token_list.extend(analyze_yield(node))
+    elif isinstance(node, ast.YieldFrom):
+        token_list.extend(analyze_yield_from(node))
+    elif isinstance(node, ast.Compare):
+        token_list.extend(analyze_compare(node))
+    elif isinstance(node, ast.Call):
+        token_list.extend(analyze_call(node))
+    elif isinstance(node, ast.FormattedValue):
+        token_list.extend(analyze_formatted_value(node))
+    elif isinstance(node, ast.JoinedStr):
+        token_list.extend(analyze_formatted_value(node))
+    elif isinstance(node, ast.Constant):
+        token_list.extend(analyze_constant(node))
+    elif isinstance(node, ast.Attribute):
+        token_list.extend(analyze_attribute(node))
+    elif isinstance(node, ast.Subscript):
+        token_list.extend(analyze_subscript(node))
+    elif isinstance(node, ast.Starred):
+        token_list.extend(analyze_starred(node))
+    elif isinstance(node, ast.Name):
+        token_list.extend(analyze_name(node))
+    elif isinstance(node, ast.List):
+        token_list.extend(analyze_list(node))
+    elif isinstance(node, ast.Tuple):
+        token_list.extend(analyze_tuple(node))
+    elif isinstance(node, ast.Slice):
+        token_list.extend(analyze_slice(node))
     return token_list

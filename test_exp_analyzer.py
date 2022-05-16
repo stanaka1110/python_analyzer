@@ -3,7 +3,7 @@ import unittest
 import os
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name
+from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -85,6 +85,13 @@ class TestExpAnalyzer(unittest.TestCase):
         correct_list = ['x', '+', 'y']
         self.assertListEqual(correct_list, analyze_bin_op(child[0]))
     
+    def test_bin_op_exp2(self):
+        tree = ast.parse("x + y - z")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        correct_list = ['x', '+', 'y', '-', 'z']
+        self.assertListEqual(correct_list, analyze_bin_op(child[0]))
+
     def test_if_exp_exp1(self):
         tree = ast.parse("a if b else c")
         child = list(ast.iter_child_nodes(tree))
@@ -165,6 +172,36 @@ class TestExpAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.Subscript)
         correct_list = ['a', '[', '1', ':', '3', ']']
         self.assertListEqual(correct_list, analyze_subscript(child[0]))
+    
+    def test_unary_op_exp1(self):
+        tree = ast.parse("-a")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.UnaryOp)
+        correct_list = ['-', 'a']
+        self.assertListEqual(correct_list, analyze_unary_op(child[0]))
+    
+    def test_unary_op_exp2(self):
+        tree = ast.parse("+a")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.UnaryOp)
+        correct_list = ['+', 'a']
+        self.assertListEqual(correct_list, analyze_unary_op(child[0]))
 
+    def test_lambda_exp1(self):
+        tree = ast.parse("lambda a, b=1: a + b")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Lambda)
+        correct_list = ['lambda', 'a', ',', 'b', '=', '1', ':', 'a', '+', 'b']
+        self.assertListEqual(correct_list, analyze_lambda(child[0]))
+    def test_lambda_exp2(self):
+        tree = ast.parse("lambda a=2, b=1: a + b")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Lambda)
+        correct_list = ['lambda', 'a', '=', '2', ',', 'b', '=', '1', ':', 'a', '+', 'b']
+        self.assertListEqual(correct_list, analyze_lambda(child[0]))
 if __name__ == '__main__':
     unittest.main()

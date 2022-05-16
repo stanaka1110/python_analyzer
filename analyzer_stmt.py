@@ -1,8 +1,8 @@
 import ast
 import warnings
 
-from analyzer_context import analyze_value, analyze_op
-from analyzer_exp import analyze_call
+from analyzer_context import  analyze_op
+from analyzer_exp import analyze_call, analyze_value
 def analyze_function_def(node, indent_level=1):
     warnings.warn("function_def deprecation", DeprecationWarning)
     assert(isinstance(node, ast.FunctionDef))
