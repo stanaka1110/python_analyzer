@@ -1,9 +1,10 @@
 
+
 import unittest
 import os
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_dict, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
+from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_dict, analyze_list_comp, analyze_set, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_starred, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -205,12 +206,64 @@ class TestExpAnalyzer(unittest.TestCase):
         self.assertListEqual(correct_list, analyze_lambda(child[0]))
     
     def test_dict_exp1(self):
-        tree = ast.parse("{\"a\":1, **d}")
+        tree = ast.parse("{'a':1, **d}")
         child = list(ast.iter_child_nodes(tree))
         child = list(ast.iter_child_nodes(child[0]))
         self.assertIsInstance(child[0], ast.Dict)
-        correct_list = ['{', '\"', 'a', '\"', ':', '1', '**', 'd', '}']
+        correct_list = ['{', '\'', 'a', '\'', ':', '1', ',', '**', 'd', '}']
         self.assertListEqual(correct_list, analyze_dict(child[0]))
 
+    def test_dict_exp2(self):
+        tree = ast.parse("{'a':1, 'b':2, **d}")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Dict)
+        correct_list = ['{', '\'', 'a', '\'', ':', '1', ',', '\'', 'b', '\'', ':', '2', ',', '**', 'd', '}']
+        self.assertListEqual(correct_list, analyze_dict(child[0]))
+
+    def test_constant_exp1(self):
+        tree = ast.parse("'a'")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Constant)
+        correct_list = ['\'', 'a', '\'']
+        self.assertListEqual(correct_list, analyze_constant(child[0]))
+    
+    def test_constant_exp2(self):
+        tree = ast.parse("1")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Constant)
+        correct_list = ['1']
+        self.assertListEqual(correct_list, analyze_constant(child[0]))
+    def test_set_exp1(self):
+        tree = ast.parse("{1, 2, 3}")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Set)
+        correct_list = ['{', '1', ',', '2', ',', '3', '}']
+        self.assertListEqual(correct_list, analyze_set(child[0]))
+    
+    def test_starred_exp1(self):
+        tree = ast.parse("*b")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Starred)
+        correct_list = ['*', 'b']
+        self.assertListEqual(correct_list, analyze_starred(child[0]))
+    def test_list_comp_exp1(self):
+        tree = ast.parse("[x for x in numbers]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.ListComp)
+        correct_list = ['[', 'x', 'for', 'x', 'in', 'numbers', ']']
+        self.assertListEqual(correct_list, analyze_list_comp(child[0]))
+    def test_list_comp_exp2(self):
+        tree = ast.parse("[i**2 for i in range(5)]")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.ListComp)
+        correct_list = ['[', 'i', '*', '*', '2', 'for', 'i', 'in', 'range', '(', '5', ')', ']']
+        self.assertListEqual(correct_list, analyze_list_comp(child[0]))  
 if __name__ == '__main__':
     unittest.main()

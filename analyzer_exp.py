@@ -1,5 +1,7 @@
 import ast
+
 import warnings
+
 
 from analyzer_context import analyze_op
 
@@ -80,24 +82,43 @@ def analyze_if_exp(node):
     return token_list
 
 def analyze_dict(node):
-    warnings.warn("dict deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Dict))
     token_list = []
+    value_list = node.values
     token_list.append("{")
-    token_list.extend(analyze_constant(node.keys))
+    for idx, key in enumerate(node.keys):
+        if idx != 0:
+            token_list.append(",")
+        if key != None:
+            token_list.extend(analyze_value(key))
+            token_list.append(":")
+            token_list.extend(analyze_value(value_list[idx]))
+        elif key == None:
+            token_list.append("**")
+            token_list.extend(analyze_value(value_list[idx]))
+
     token_list.append("}")
     return token_list
 
 def analyze_set(node):
-    warnings.warn("set deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Set))
     token_list = []
+    token_list.append("{")
+    for idx, v in enumerate(node.elts):
+        if idx != 0:
+            token_list.append(",")
+        token_list.extend(analyze_value(v))
+    token_list.append("}")
     return token_list
 
 def analyze_list_comp(node):
     warnings.warn("list comp deprecation", DeprecationWarning)
     assert(isinstance(node, ast.ListComp))
     token_list = []
+    token_list.append("[")
+    token_list.extend(analyze_expr(node.elt))
+    token_list.extend(analyze_comprehension(node.generators[0]))
+    token_list.append("]")
     return token_list
 
 def analyze_set_comp(node):
@@ -116,6 +137,15 @@ def analyze_generator_exp(node):
     warnings.warn("generator exp deprecation", DeprecationWarning)
     assert(isinstance(node, ast.GeneratorExp))
     token_list = []
+    return token_list
+
+def analyze_comprehension(node):
+    assert(isinstance(node, ast.comprehension))
+    token_list = []
+    token_list.append("for")
+    token_list.extend(analyze_expr(node.target))
+    token_list.append("in")
+    token_list.extend(analyze_expr(node.iter))
     return token_list
 
 def analyze_await(node):
@@ -143,6 +173,7 @@ def analyze_compare(node):
     return token_list
 
 def analyze_call(node):
+    warnings.warn("call deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Call))
     token_list = []
 
@@ -157,15 +188,8 @@ def analyze_call(node):
         if idx != 0:
             token_list.append(",")
         
-        if isinstance(a, ast.Attribute):
-            token_list.extend(analyze_attribute(a))
-        elif isinstance(a, ast.Name):
-            token_list.extend(analyze_name(a))
+        token_list.extend(analyze_value(a))
         
-        elif isinstance(a, ast.Starred):
-            token_list.pop(-1)
-            tmp_list.append("*")
-            tmp_list.append(a.value.id)
     
     keyword_list = node.keywords
     if len(keyword_list) != 0:
@@ -209,7 +233,10 @@ def analyze_join_str(node):
 def analyze_constant(node):
     #strの処理部分，数値or文字列の処理を実装
     assert(isinstance(node, ast.Constant))
-    token_list = [str(node.value)]
+    if type(node.value) == int:
+        token_list = [str(node.value)]
+    elif type(node.value) == str:
+        token_list = ['\'', str(node.value), '\'']
     return token_list
 
 def analyze_attribute(node):
@@ -249,6 +276,8 @@ def analyze_starred(node):
     warnings.warn("starred deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Starred))
     token_list = []
+    token_list.append("*")
+    token_list.extend(analyze_value(node.value))
     return token_list
 
 def analyze_name(node):
@@ -321,6 +350,10 @@ def analyze_value(node):
         token_list.extend(analyze_list(node))
     elif isinstance(node, ast.Subscript):
         token_list.extend(analyze_subscript(node))
+    elif isinstance(node, ast.Dict):
+        token_list.extend(analyze_dict(node))
+    elif isinstance(node, ast.Set):
+        token_list.extend(analyze_set(node))
     else:
         print("error")
         exit()
