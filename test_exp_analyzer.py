@@ -3,7 +3,7 @@ import unittest
 import os
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
+from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_dict, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -203,5 +203,14 @@ class TestExpAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.Lambda)
         correct_list = ['lambda', 'a', '=', '2', ',', 'b', '=', '1', ':', 'a', '+', 'b']
         self.assertListEqual(correct_list, analyze_lambda(child[0]))
+    
+    def test_dict_exp1(self):
+        tree = ast.parse("{\"a\":1, **d}")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Dict)
+        correct_list = ['{', '\"', 'a', '\"', ':', '1', '**', 'd', '}']
+        self.assertListEqual(correct_list, analyze_dict(child[0]))
+
 if __name__ == '__main__':
     unittest.main()

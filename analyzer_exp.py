@@ -83,6 +83,9 @@ def analyze_dict(node):
     warnings.warn("dict deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Dict))
     token_list = []
+    token_list.append("{")
+    token_list.extend(analyze_constant(node.keys))
+    token_list.append("}")
     return token_list
 
 def analyze_set(node):
@@ -204,6 +207,7 @@ def analyze_join_str(node):
     return token_list
 
 def analyze_constant(node):
+    #strの処理部分，数値or文字列の処理を実装
     assert(isinstance(node, ast.Constant))
     token_list = [str(node.value)]
     return token_list
