@@ -142,10 +142,17 @@ def analyze_generator_exp(node):
 def analyze_comprehension(node):
     assert(isinstance(node, ast.comprehension))
     token_list = []
+    if node.is_async != 0:
+        token_list.append("async")
     token_list.append("for")
     token_list.extend(analyze_expr(node.target))
     token_list.append("in")
     token_list.extend(analyze_expr(node.iter))
+    ifs_list = node.ifs
+    for i in ifs_list:
+        token_list.append("if")
+        token_list.extend(analyze_compare(i))
+
     return token_list
 
 def analyze_await(node):
@@ -169,7 +176,16 @@ def analyze_yield_from(node):
 def analyze_compare(node):
     warnings.warn("compare deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Compare))
+    left =node.left
+    ops = node.ops
+    comparators = node.comparators
+
     token_list = []
+    token_list.extend(analyze_value(left))
+    for o, c in zip(ops, comparators):
+        token_list.extend(analyze_op(o))
+        token_list.extend(analyze_value(c))
+    
     return token_list
 
 def analyze_call(node):
@@ -219,24 +235,36 @@ def analyze_call(node):
     return token_list
 
 def analyze_formatted_value(node):
-    warnings.warn("formatted value deprecation", DeprecationWarning)
+    # conversionによる指定があるが作成していない
     assert(isinstance(node, ast.FormattedValue))
     token_list = []
+    token_list.append("{")
+    token_list.extend(analyze_expr(node.value))
+    if node.format_spec != None:
+        token_list.append(":")
+        token_list.extend(analyze_expr(node.format_spec.values))
+    token_list.append("}")
     return token_list
 
 def analyze_join_str(node):
     warnings.warn("join str deprecation", DeprecationWarning)
     assert(isinstance(node, ast.JoinedStr))
     token_list = []
+    token_list.append("f")
+    values = node.values
+    for v in values:
+        token_list.extend(analyze_expr(v))
+
     return token_list
 
 def analyze_constant(node):
     #strの処理部分，数値or文字列の処理を実装
     assert(isinstance(node, ast.Constant))
-    if type(node.value) == int:
-        token_list = [str(node.value)]
-    elif type(node.value) == str:
+    
+    if type(node.value) == str:
         token_list = ['\'', str(node.value), '\'']
+    else:
+        token_list = [str(node.value)]
     return token_list
 
 def analyze_attribute(node):

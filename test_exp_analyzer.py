@@ -4,7 +4,7 @@ import unittest
 import os
 import ast
 
-from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_constant, analyze_dict, analyze_list_comp, analyze_set, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_starred, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
+from analyzer_exp import analyze_attribute, analyze_call, analyze_bool_op, analyze_bin_op, analyze_compare, analyze_constant, analyze_dict, analyze_join_str, analyze_list_comp, analyze_set, analyze_lambda, analyze_list, analyze_named_expr, analyze_if_exp, analyze_starred, analyze_subscript, analyze_tuple, analyze_name, analyze_unary_op
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -264,6 +264,21 @@ class TestExpAnalyzer(unittest.TestCase):
         child = list(ast.iter_child_nodes(child[0]))
         self.assertIsInstance(child[0], ast.ListComp)
         correct_list = ['[', 'i', '*', '*', '2', 'for', 'i', 'in', 'range', '(', '5', ')', ']']
-        self.assertListEqual(correct_list, analyze_list_comp(child[0]))  
+        self.assertListEqual(correct_list, analyze_list_comp(child[0]))
+    def test_compare_exp1(self):
+        tree = ast.parse("1 <= a < 10")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.Compare)
+        correct_list = ['1', '<', '=', 'a', '<', '10']
+        self.assertListEqual(correct_list, analyze_compare(child[0]))
+
+    def test_joined_str_and_fomrmatted_value_exp1(self):
+        tree = ast.parse("f\"sin({a}) is {sin(a):.3}\"")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.JoinedStr)
+        correct_list = ['f', ''', 'sin(', '{', 'a', '}', ') is ', '{', 'sin', '(', 'a', ')', ':', '.3', '}', ''']
+        self.assertListEqual(correct_list, analyze_join_str(child[0]))
 if __name__ == '__main__':
     unittest.main()

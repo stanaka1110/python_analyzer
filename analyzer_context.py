@@ -46,4 +46,31 @@ def analyze_op(node):
         token_list.append("not")
     elif isinstance(node, ast.Invert):
         token_list.append("~")
+    elif isinstance(node, ast.Eq):
+        token_list.append("=")
+        token_list.append("=")
+    elif isinstance(node, ast.NotEq):
+        token_list.append("!")
+        token_list.append("=")
+    elif isinstance(node, ast.Lt):
+        token_list.append("<")
+    elif isinstance(node, ast.LtE):
+        token_list.append("<")
+        token_list.append("=")
+    elif isinstance(node, ast.Gt):
+        token_list.append(">")
+    elif isinstance(node, ast.GtE):
+        token_list.append(">")
+        token_list.append("=")
+    elif isinstance(node, ast.Is):
+        token_list.append("is")
+    elif isinstance(node, ast.IsNot):
+        token_list.append("is")
+        token_list.append("not")
+    elif isinstance(node, ast.In):
+        token_list.append("in")
+    elif isinstance(node, ast.NotIn):
+        token_list.append("not")
+        token_list.append("in")
+    
     return token_list
