@@ -213,8 +213,12 @@ def analyze_match(node):
 def analyze_raise(node):
     warnings.warn("'raise deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Raise))
-
     token_list = []
+    token_list.append("raise")
+    token_list.extend(analyze_expr(node.exc))
+    if node.cause != None:
+        token_list.append("from")
+        token_list.extend(analyze_expr(node.cause))
     return token_list
 
 def analyze_try(node, indent_level):

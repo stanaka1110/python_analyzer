@@ -156,21 +156,25 @@ def analyze_comprehension(node):
     return token_list
 
 def analyze_await(node):
-    warnings.warn("await deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Await))
     token_list = []
+    token_list.append("await")
+    token_list.extend(analyze_expr(node.value))
     return token_list
 
 def analyze_yield(node):
-    warnings.warn("yield deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Yield))
     token_list = []
+    token_list.append("yield")
+    token_list.extend(analyze_expr(node.value))
     return token_list
 
 def analyze_yield_from(node):
-    warnings.warn("yield from deprecation", DeprecationWarning)
     assert(isinstance(node, ast.YieldFrom))
     token_list = []
+    token_list.append("yield")
+    token_list.append("from")
+    token_list.extend(analyze_expr(node.value))
     return token_list
 
 def analyze_compare(node):
