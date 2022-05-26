@@ -1,7 +1,7 @@
 import ast
 import warnings
 
-from analyzer_context import  analyze_op
+from analyzer_context import  analyze_alias, analyze_op
 from analyzer_exp import analyze_call, analyze_value
 def analyze_function_def(node, indent_level=1):
     warnings.warn("function_def deprecation", DeprecationWarning)
@@ -78,9 +78,7 @@ def analyze_return(node):
     token_list = []
 
     token_list.append("return")
-
-    val = node.value.value
-    token_list.append(str(val))
+    token_list.extend(analyze_expr(node.value))
 
     return token_list
 
@@ -231,18 +229,34 @@ def analyze_assert(node):
     warnings.warn("assert deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Assert))
     token_list = []
+    token_list.append("import")
+    for n in node.names:
+        token_list.extend(analyze_alias(n))
     return token_list
 
 def analyze_import(node):
-    warnings.warn("import deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Import))
     token_list = []
+    token_list.append("import")
+    for idx, n in enumerate(node.names):
+        if idx != 0:
+            token_list.append(",")
+        token_list.extend(analyze_alias(n))
     return token_list
 
 def analyze_import_from(node):
     warnings.warn("import from deprecation", DeprecationWarning)
     assert(isinstance(node, ast.ImportFrom))
     token_list = []
+    token_list.append("from")
+    for i in range(node.level):
+        token_list.append(".")
+    token_list.append(node.module)
+    token_list.append("import")
+    for idx, n in enumerate(node.names):
+        if idx != 0:
+            token_list.append(",")
+        token_list.extend(analyze_alias(n))
     return token_list
 
 def analyze_global(node):

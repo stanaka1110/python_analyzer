@@ -74,3 +74,12 @@ def analyze_op(node):
         token_list.append("in")
     
     return token_list
+
+def analyze_alias(node):
+    assert(isinstance(node, ast.alias))
+    token_list = []
+    token_list.append(node.name)
+    if node.asname != None:
+        token_list.append("as")
+        token_list.append(node.asname)
+    return token_list

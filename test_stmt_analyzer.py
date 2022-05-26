@@ -2,7 +2,7 @@ import unittest
 import os
 import ast
 
-from analyzer_stmt import analyze_annasign, analyze_assign, analyze_delete, analyze_augassign
+from analyzer_stmt import analyze_annasign, analyze_assign, analyze_delete, analyze_augassign, analyze_import, analyze_import_from
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class TestAnalyzer(unittest.TestCase):
@@ -97,3 +97,16 @@ class TestAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.AugAssign)
         correct_list = ['x', '/', '=', '2']
         self.assertListEqual(correct_list, analyze_augassign(child[0]))
+    def test_import_stmt1(self):
+        tree = ast.parse("import a, b as c")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Import)
+        correct_list = ['import', 'a', ',', 'b', 'as', 'c']
+        self.assertListEqual(correct_list, analyze_import(child[0]))
+
+    def test_import_from_stmt2(self):
+        tree = ast.parse("from ..d import a, b as c")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.ImportFrom)
+        correct_list = ['from', '.', '.', 'd', 'import', 'a', ',', 'b', 'as', 'c']
+        self.assertListEqual(correct_list, analyze_import_from(child[0]))
