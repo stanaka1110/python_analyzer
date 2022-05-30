@@ -10,14 +10,7 @@ def analyze_bool_op(node):
     assert(isinstance(node, ast.BoolOp))
     token_list = []
     child = list(ast.iter_child_nodes(node))
-    for c in child:
-        if isinstance(c, ast.Or):
-            token_list.extend(analyze_op(c))
-        token_list.extend(analyze_expr(c))
-    
-
-        
-    
+      
     return token_list
 
 def analyze_named_expr(node):
