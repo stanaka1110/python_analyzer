@@ -2,7 +2,7 @@ import unittest
 import os
 import ast
 
-from analyzer_stmt import analyze_annasign, analyze_assign, analyze_delete, analyze_augassign, analyze_import, analyze_import_from
+from analyzer_stmt import analyze_annasign, analyze_assert, analyze_assign, analyze_delete, analyze_augassign, analyze_global, analyze_import, analyze_import_from, analyze_nonlocal
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class TestAnalyzer(unittest.TestCase):
@@ -110,3 +110,31 @@ class TestAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.ImportFrom)
         correct_list = ['from', '.', '.', 'd', 'import', 'a', ',', 'b', 'as', 'c']
         self.assertListEqual(correct_list, analyze_import_from(child[0]))
+
+    def test_global_stmt1(self):
+        tree = ast.parse("global x,y,z")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Global)
+        correct_list = ['global', 'x', ',', 'y', ',', 'z']
+        self.assertListEqual(correct_list, analyze_global(child[0]))
+        
+    def test_nonlocal_stmt1(self):
+        tree = ast.parse("nonlocal x,y,z")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast. Nonlocal)
+        correct_list = ['nonlocal', 'x', ',', 'y', ',', 'z']
+        self.assertListEqual(correct_list, analyze_nonlocal(child[0]))
+
+    def test_assert_stmt1(self):
+        tree = ast.parse("assert x,y")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Assert)
+        correct_list = ['assert', 'x', ',', 'y']
+        self.assertListEqual(correct_list, analyze_assert(child[0]))
+
+    def test_assert_stmt1(self):
+        tree = ast.parse("assert(isinstance(x,y))")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Assert)
+        correct_list = ['assert',  'isinstance', '(', 'x', ',', 'y', ')']
+        self.assertListEqual(correct_list, analyze_assert(child[0]))

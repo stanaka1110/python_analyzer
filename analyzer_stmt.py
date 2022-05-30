@@ -2,7 +2,7 @@ import ast
 import warnings
 
 from analyzer_context import  analyze_alias, analyze_op
-from analyzer_exp import analyze_call, analyze_value
+from analyzer_exp import analyze_call, analyze_value, analyze_expr
 def analyze_function_def(node, indent_level=1):
     warnings.warn("function_def deprecation", DeprecationWarning)
     assert(isinstance(node, ast.FunctionDef))
@@ -95,7 +95,7 @@ def analyze_delete(node):
     for idx, t in enumerate(target_list):
         if idx != 0:
             token_list.append(",")
-        token_list.extend(analyze_value(t))
+        token_list.extend(analyze_expr(t))
     return token_list
 
 def analyze_assign(node):
@@ -106,19 +106,10 @@ def analyze_assign(node):
     for idx, t in enumerate(target_list):
         if idx != 0:
             token_list.append("=")
-        token_list.extend(analyze_value(t))
-    # if isinstance(target_list[0], ast.Name):
-    #     for idx, t in enumerate(target_list):
-    #         if idx != 0:
-    #             token_list.append("=")
-    #         token_list.extend(analyze_name(t))
-    # elif isinstance(target_list[0], ast.Tuple):
-    #     token_list.extend(analyze_tuple(target_list[0]))
-    # elif isinstance(target_list[0], ast.Subscript):
-    #     token_list.extend(analyze_subscript(target_list[0]))
+        token_list.extend(analyze_expr(t))
     token_list.append("=")
     value = node.value
-    token_list.extend(analyze_value(value))
+    token_list.extend(analyze_expr(value))
     
     return token_list
 
@@ -229,9 +220,12 @@ def analyze_assert(node):
     warnings.warn("assert deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Assert))
     token_list = []
-    token_list.append("import")
-    for n in node.names:
-        token_list.extend(analyze_alias(n))
+    token_list.append("assert")
+    token_list.extend(analyze_expr(node.test))
+    if node.msg != None:
+        token_list.append(",")
+        token_list.extend(analyze_expr(node.msg))
+
     return token_list
 
 def analyze_import(node):
@@ -245,11 +239,10 @@ def analyze_import(node):
     return token_list
 
 def analyze_import_from(node):
-    warnings.warn("import from deprecation", DeprecationWarning)
     assert(isinstance(node, ast.ImportFrom))
     token_list = []
     token_list.append("from")
-    for i in range(node.level):
+    for _ in range(node.level):
         token_list.append(".")
     token_list.append(node.module)
     token_list.append("import")
@@ -260,21 +253,22 @@ def analyze_import_from(node):
     return token_list
 
 def analyze_global(node):
-    warnings.warn("global deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Global))
     token_list = []
+    token_list.append("global")
+    for idx, n in enumerate(node.names):
+        if idx != 0:
+            token_list.append(",")
+        token_list.append(n)
     return token_list
 
 def analyze_nonlocal(node):
-    warnings.warn("nonlocal deprecation", DeprecationWarning)
-    assert(isinstance(node, ast.Nonlocal))
     token_list = []
-    return token_list
-
-def analyze_expr(node):
-    warnings.warn("expr deprecation", DeprecationWarning)
-    assert(isinstance(node, ast.Expr))
-    token_list = []
+    token_list.append("nonlocal")
+    for idx, n in enumerate(node.names):
+        if idx != 0:
+            token_list.append(",")
+        token_list.append(n)
     return token_list
 
 def analyze_pass(node):

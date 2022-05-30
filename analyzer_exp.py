@@ -9,11 +9,14 @@ def analyze_bool_op(node):
     warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
     token_list = []
-    values = node.values
-    for idx, v in enumerate(values):
+    child = list(ast.iter_child_nodes(node))
+    for c in child:
+        if isinstance(c, ast.Or):
+            token_list.extend(analyze_op(c))
+        token_list.extend(analyze_expr(c))
+    
 
-        token_list.extend(analyze_value(v))
-        token_list.extend(analyze_op(node.op))
+        
     
     return token_list
 
@@ -201,27 +204,23 @@ def analyze_call(node):
     token_list.append("(")
 
     arg_list = list(node.args)
-    print(arg_list)
-
     tmp_list = []
     for idx, a in enumerate(arg_list):
+        
+        if isinstance(a, ast.Starred):
+            tmp_list.append(",")
+            tmp_list.extend(analyze_expr(a))
+            continue
         if idx != 0:
             token_list.append(",")
-        
-        token_list.extend(analyze_value(a))
+        token_list.extend(analyze_expr(a))
         
     
     keyword_list = node.keywords
-    if len(keyword_list) != 0:
-        token_list.append(",")
-    else:
-        token_list.extend(tmp_list)
     for idx, k in enumerate(keyword_list):
-
-        if idx != 0:
-            token_list.append(",")
         
         if k.arg != None:
+            token_list.append(",")
             token_list.append(k.arg)
             token_list.append("=")
             if isinstance(k.value, ast.Name):
