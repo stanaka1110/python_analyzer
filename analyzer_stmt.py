@@ -1,4 +1,5 @@
 import ast
+from re import I
 import warnings
 
 from analyzer_context import  analyze_alias, analyze_op
@@ -73,7 +74,6 @@ def analyze_class_def(node, indent_level=1):
 
 def analyze_return(node):
 
-    warnings.warn("return deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Return))
     token_list = []
 
@@ -83,7 +83,6 @@ def analyze_return(node):
     return token_list
 
 def analyze_delete(node):
-    warnings.warn("delete deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Delete))
     token_list = []
 
@@ -113,7 +112,7 @@ def analyze_assign(node):
     
     return token_list
 
-def analyze_annasign(node):
+def analyze_ann_assign(node):
     assert(isinstance(node, ast.AnnAssign))
     token_list = []
 
@@ -123,7 +122,7 @@ def analyze_annasign(node):
     token_list.extend(analyze_value(node.annotation))
     return token_list
 
-def analyze_augassign(node):
+def analyze_aug_assign(node):
     assert(isinstance(node, ast.AugAssign))
     token_list = []
     token_list.extend(analyze_value(node.target))
@@ -141,25 +140,12 @@ def analyze_for(node, indent_level):
     assert(isinstance(node, ast.For))
     token_list = []
     token_list.append("for")
-    target = node.target
-    token_list.extend(analyze_value(target))
-    # if isinstance(target, ast.Name):
-    #     token_list.extend(analyze_name(target))
-    # elif isinstance(target, ast.Tuple):
-    #     child = list(target.elts)
-    #     token_list.extend(analyze_tuple(child))
-    # elif isinstance(target, ast.List):
-    #     token_list.append("[")
-
-    #     child = list(target.elts)
-    #     for c in child[1:]:
-    #         token_list.append(",")
-    #         token_list.append(c.id)
-    #     token_list.append("]")
-
+    token_list.extend(analyze_expr(node.target))
     token_list.append("in")
-    if isinstance(node.iter, ast.Call):
-        token_list.extend(analyze_call(node.iter))
+    token_list.extend(analyze_expr(node.iter))
+    for b in node.body:
+        token_list.extend(analyze_expr(b))
+    
     return token_list
 
 def analyze_async_for(node, indent_level):
@@ -283,5 +269,41 @@ def analyze_continue(node):
     assert(isinstance(node, ast.Continue))
     return ["continue"]
 
+def analyze_stmt(node, indent_level=1):
+    token_list = []
+    if isinstance(node, ast.FunctionDef):
+        token_list.extend(analyze_function_def(node, indent_level))
+    elif isinstance(node, ast.AsyncFunctionDef):
+        token_list.extend(analyze_async_function_def(node, indent_level))
+    elif isinstance(node, ast.ClassDef):
+        token_list.extend(analyze_class_def(node, indent_level))
+    elif isinstance(node, ast.Return):
+        token_list.extend(analyze_return(node))
+    elif isinstance(node, ast.Delete):
+        token_list.extend(analyze_delete(node))
+    elif isinstance(node, ast.Assign):
+        token_list.extend(analyze_assign(node))
+    elif isinstance(node, ast.AugAssign):
+        token_list.extend(analyze_aug_assign(node))
+    elif isinstance(node, ast.AnnAssign):
+        token_list.extend(analyze_ann_assign(node))
+    elif isinstance(node, ast.For):
+        token_list.extend(analyze_for(node, indent_level))
+    elif isinstance(node, ast.AsyncFor):
+        token_list.extend(analyze_async_for(node, indent_level))
+    elif isinstance(node, ast.While):
+        token_list.extend(analyze_while(node, indent_level))
+    elif isinstance(node, ast.If):
+        token_list.extend(analyze_if(node, indent_level))
+    elif isinstance(node, ast.With):
+        token_list.extend(analyze_with(node, indent_level))
+    elif isinstance(node, ast.AsyncWith):
+        token_list.extend(analyze_async_with(node, indent_level))
+    elif isinstance(node, ast.Raise):
+        token_list.extend(analyze_raise(node))
+    elif isinstance(node, ast.Try):
+        token_list.extend(analyze_try(node, indent_level))
+    
+    return token_list
 
 

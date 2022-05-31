@@ -1,8 +1,12 @@
-import unittest
-import os
 import ast
+import os
+import unittest
 
-from analyzer_stmt import analyze_annasign, analyze_assert, analyze_assign, analyze_delete, analyze_augassign, analyze_global, analyze_import, analyze_import_from, analyze_nonlocal
+from analyzer_stmt import (analyze_ann_assign, analyze_assert, analyze_assign,
+                           analyze_aug_assign, analyze_delete, analyze_global,
+                           analyze_import, analyze_import_from,
+                           analyze_nonlocal)
+
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
 class TestAnalyzer(unittest.TestCase):
@@ -70,33 +74,33 @@ class TestAnalyzer(unittest.TestCase):
         if isinstance(child[0], ast.Assign):
             self.assertListEqual(correct_list, analyze_assign(child[0]))
     
-    def test_annassign_stmt1(self):
+    def test_ann_assign_stmt1(self):
         tree = ast.parse("c: int")
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.AnnAssign)
         correct_list = ['c', ':', 'int']
-        self.assertListEqual(correct_list, analyze_annasign(child[0]))
+        self.assertListEqual(correct_list, analyze_ann_assign(child[0]))
 
-    def test_annassign_stmt2(self):
+    def test_ann_assign_stmt2(self):
         tree = ast.parse("a.b: int")
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.AnnAssign)
         correct_list = ['a', '.', 'b', ':', 'int']
-        self.assertListEqual(correct_list, analyze_annasign(child[0]))
+        self.assertListEqual(correct_list, analyze_ann_assign(child[0]))
 
-    def test_augassign_stmt1(self):
+    def test_aug_assign_stmt1(self):
         tree = ast.parse("x += 2")
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.AugAssign)
         correct_list = ['x', '+', '=', '2']
-        self.assertListEqual(correct_list, analyze_augassign(child[0]))
+        self.assertListEqual(correct_list, analyze_aug_assign(child[0]))
     
-    def test_augassign_stmt2(self):
+    def test_aug_assign_stmt2(self):
         tree = ast.parse("x /= 2")
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.AugAssign)
         correct_list = ['x', '/', '=', '2']
-        self.assertListEqual(correct_list, analyze_augassign(child[0]))
+        self.assertListEqual(correct_list, analyze_aug_assign(child[0]))
     def test_import_stmt1(self):
         tree = ast.parse("import a, b as c")
         child = list(ast.iter_child_nodes(tree))

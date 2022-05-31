@@ -71,6 +71,14 @@ class TestExpAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.BoolOp)
         correct_list = ['x', 'or', 'y', 'and', 'z']
         self.assertListEqual(correct_list, analyze_bool_op(child[0]))
+
+    def test_bool_op_exp3(self):
+        tree = ast.parse("x or y or z")
+        child = list(ast.iter_child_nodes(tree))
+        child = list(ast.iter_child_nodes(child[0]))
+        self.assertIsInstance(child[0], ast.BoolOp)
+        correct_list = ['x', 'or', 'y', 'or', 'z']
+        self.assertListEqual(correct_list, analyze_bool_op(child[0]))
     
     def test_named_expr_exp1(self):
         tree = ast.parse("(x := 4)")

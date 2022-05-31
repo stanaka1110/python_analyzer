@@ -6,11 +6,14 @@ import warnings
 from analyzer_context import analyze_op
 
 def analyze_bool_op(node):
-    warnings.warn("bool op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BoolOp))
     token_list = []
-    child = list(ast.iter_child_nodes(node))
-      
+    for i in range(len(node.values)):
+        if i != 0:
+            token_list.extend(analyze_op(node.op))
+        token_list.extend(analyze_expr(node.values[i]))
+            
+
     return token_list
 
 def analyze_named_expr(node):
@@ -72,9 +75,12 @@ def analyze_if_exp(node):
     test = node.test
     body = node.body
     orelse = node.orelse
-    token_list.extend(analyze_name(test))
-    token_list.extend(analyze_name(body))
-    token_list.extend(analyze_name(orelse))
+    token_list.extend(analyze_expr(body))
+    token_list.append("if")
+    token_list.extend(analyze_expr(test))
+    if orelse != None:
+        token_list.append("else")
+        token_list.extend(analyze_expr(orelse))
     return token_list
 
 def analyze_dict(node):
