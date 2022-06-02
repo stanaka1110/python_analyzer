@@ -5,7 +5,7 @@ import unittest
 from analyzer_stmt import (analyze_ann_assign, analyze_assert, analyze_assign,
                            analyze_aug_assign, analyze_delete, analyze_global,
                            analyze_import, analyze_import_from,
-                           analyze_nonlocal)
+                           analyze_nonlocal, analyze_try)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -142,3 +142,16 @@ class TestAnalyzer(unittest.TestCase):
         self.assertIsInstance(child[0], ast.Assert)
         correct_list = ['assert',  'isinstance', '(', 'x', ',', 'y', ')']
         self.assertListEqual(correct_list, analyze_assert(child[0]))
+    
+    def test_try_stmt1(self):
+        tree = ast.parse(
+            """
+try:
+    print(1 / 0)
+except ZeroDivisionError:
+    print('Error')
+""")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Try)
+        correct_list = ['try', ':', '\n', '\t', '\t', 'print', '(', '1', '/', '0', ')', '\n', '\t', 'except', 'ZeroDivisionError', ':', '\n', '\t', '\t', 'print', '(', '\'', 'Error', '\'', ')', '\n']
+        self.assertListEqual(correct_list, analyze_try(child[0]))

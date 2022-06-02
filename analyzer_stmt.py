@@ -1,5 +1,6 @@
 import ast
 from re import I
+from secrets import token_urlsafe
 import warnings
 
 from analyzer_context import  analyze_alias, analyze_op
@@ -196,14 +197,54 @@ def analyze_raise(node):
         token_list.extend(analyze_expr(node.cause))
     return token_list
 
-def analyze_try(node, indent_level):
+def analyze_try(node, indent_level=1):
     warnings.warn("try deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Try))
     token_list = []
+    token_list.append("try")
+    token_list.append(":")
+    token_list.append("\n")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level))
+    token_list.append("\n")
+    if len(node.handlers) != 0:
+        for e in node.handlers:
+            token_list.extend(analyze_except_handler(e, indent_level+1))
+    
+    if len(node.orelse) != 0:
+        token_list.append("else")
+        token_list.append(":")
+        for o in node.orelse:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(o, indent_level))
+            token_list.append("\n")
+    if len(node.finalbody) != 0:
+        token_list.append("finally")
+        token_list.append(":")
+        for f in node.finalbody:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(f, indent_level))
+            token_list.append("\n")
+        
+    return token_list
+
+def analyze_except_handler(node, indent_level):
+    assert(isinstance(node, ast.ExceptHandler))
+    token_list = []
+    token_list.append("except")
+    token_list.extend(analyze_expr(node.type))
+    if node.name != None:
+        token_list.append("as")
+        token_list.append(node.name)
+    token_list.append(":")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level))
+        token_list.append("\n")
     return token_list
 
 def analyze_assert(node):
-    warnings.warn("assert deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Assert))
     token_list = []
     token_list.append("assert")
@@ -269,6 +310,12 @@ def analyze_continue(node):
     assert(isinstance(node, ast.Continue))
     return ["continue"]
 
+def analyze_exp(node):
+    assert(isinstance(node, ast.Expr))
+    token_list = []
+    token_list.extend(analyze_expr(node.value))
+    return token_list
+
 def analyze_stmt(node, indent_level=1):
     token_list = []
     if isinstance(node, ast.FunctionDef):
@@ -303,7 +350,24 @@ def analyze_stmt(node, indent_level=1):
         token_list.extend(analyze_raise(node))
     elif isinstance(node, ast.Try):
         token_list.extend(analyze_try(node, indent_level))
-    
+    elif isinstance(node, ast.Assert):
+        token_list.extend(analyze_assert(node))
+    elif isinstance(node, ast.Import):
+        token_list.extend(analyze_import(node))
+    elif isinstance(node, ast.ImportFrom):
+        token_list.extend(analyze_import_from(node))
+    elif isinstance(node, ast.Global):
+        token_list.extend(analyze_global(node))
+    elif isinstance(node, ast.Nonlocal):
+        token_list.extend(analyze_nonlocal(node))
+    elif isinstance(node, ast.Expr):
+        token_list.extend(analyze_exp(node))
+    elif isinstance(node, ast.Pass):
+        token_list.extend(analyze_pass(node))
+    elif isinstance(node, ast.Break):
+        token_list.extend(analyze_break(node))
+    elif isinstance(node, ast.Continue):
+        token_list.extend(analyze_break(node))
     return token_list
 
 
