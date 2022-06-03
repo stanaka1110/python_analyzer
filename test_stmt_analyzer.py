@@ -196,3 +196,4 @@ with open("test.txt", "r") as fileread:
         correct_list = ['with', 'open', '(', "'", 'test.txt', "'", ',', "'", 'r', "'", ')', 'as', 'fileread', ':', '\n', '\t', 'print', '(', 'fileread', '.', 'read', '(', ')', ')', '\n']
         self.assertListEqual(correct_list, analyze_with(child[0], 0))
         # test_parse = ast.parse(" ".join(correct_list).replace("\n ", "\n"))
+        
