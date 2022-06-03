@@ -171,8 +171,22 @@ def analyze_if(node, indent_level):
 def analyze_with(node, indent_level):
     warnings.warn("with deprecation", DeprecationWarning)
     assert(isinstance(node, ast.With))
-
     token_list = []
+    token_list.extend(["\t"]*(indent_level))
+    token_list.append("with")
+    for idx, i in enumerate(node.items):
+        if idx != 0:
+            token_list.append(",")
+        token_list.extend(analyze_expr(i.context_expr))
+        token_list.append("as")
+        token_list.extend(analyze_expr(i.optional_vars))
+    token_list.append(":")
+    token_list.append("\n")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level))
+        token_list.append("\n")
+    
     return token_list
 
 def analyze_async_with(node, indent_level):
@@ -181,10 +195,6 @@ def analyze_async_with(node, indent_level):
 
     token_list = []
     return token_list
-
-def analyze_match(node):
-    warnings.warn("match FutureWarning", FutureWarning)
-    return []
 
 def analyze_raise(node):
     warnings.warn("'raise deprecation", DeprecationWarning)
@@ -197,7 +207,7 @@ def analyze_raise(node):
         token_list.extend(analyze_expr(node.cause))
     return token_list
 
-def analyze_try(node, indent_level=1):
+def analyze_try(node, indent_level):
     warnings.warn("try deprecation", DeprecationWarning)
     assert(isinstance(node, ast.Try))
     token_list = []
@@ -210,11 +220,12 @@ def analyze_try(node, indent_level=1):
     token_list.append("\n")
     if len(node.handlers) != 0:
         for e in node.handlers:
-            token_list.extend(analyze_except_handler(e, indent_level+1))
+            token_list.extend(analyze_except_handler(e, indent_level))
     
     if len(node.orelse) != 0:
         token_list.append("else")
         token_list.append(":")
+        token_list.append("\n")
         for o in node.orelse:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(o, indent_level))
@@ -222,6 +233,7 @@ def analyze_try(node, indent_level=1):
     if len(node.finalbody) != 0:
         token_list.append("finally")
         token_list.append(":")
+        token_list.append("\n")
         for f in node.finalbody:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(f, indent_level))
@@ -238,6 +250,7 @@ def analyze_except_handler(node, indent_level):
         token_list.append("as")
         token_list.append(node.name)
     token_list.append(":")
+    token_list.append("\n")
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level))

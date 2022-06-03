@@ -5,7 +5,7 @@ import unittest
 from analyzer_stmt import (analyze_ann_assign, analyze_assert, analyze_assign,
                            analyze_aug_assign, analyze_delete, analyze_global,
                            analyze_import, analyze_import_from,
-                           analyze_nonlocal, analyze_try)
+                           analyze_nonlocal, analyze_try, analyze_with)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -153,5 +153,46 @@ except ZeroDivisionError:
 """)
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.Try)
-        correct_list = ['try', ':', '\n', '\t', '\t', 'print', '(', '1', '/', '0', ')', '\n', '\t', 'except', 'ZeroDivisionError', ':', '\n', '\t', '\t', 'print', '(', '\'', 'Error', '\'', ')', '\n']
-        self.assertListEqual(correct_list, analyze_try(child[0]))
+        correct_list = ['try', ':', '\n', '\t', '\t', 'print', '(', '1', '/', '0', ')', '\n', 'except', 'ZeroDivisionError', ':', '\n', '\t', '\t', 'print', '(', "'", 'Error', "'", ')', '\n']
+        self.assertListEqual(correct_list, analyze_try(child[0], indent_level=1))
+
+    def test_try_stmt2(self):
+        tree = ast.parse(
+            """
+try:
+    print(1 / 0)
+except ZeroDivisionError:
+    print('Error')
+else:
+    print('Error')
+finally :
+    print('Error')
+""")
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.Try)
+        correct_list = ['try', ':', '\n', '\t', 'print', '(', '1', '/', '0', ')', '\n', 'except', 'ZeroDivisionError', ':', '\n', '\t', 'print', '(', "'", 'Error', "'", ')', '\n', 'else', ':', '\n', '\t', 'print', '(', "'", 'Error', "'", ')', '\n', 'finally', ':', '\n', '\t', 'print', '(', "'", 'Error', "'", ')', '\n']
+        self.assertListEqual(correct_list, analyze_try(child[0], indent_level=0))
+        #test_parse = ast.parse(" ".join(correct_list).replace("\n ", "\n"))
+    def test_with_stmt1(self):
+        tree = ast.parse(
+            """
+with a as b, c as d:
+    something(b, d)    
+            """)
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.With)
+        correct_list = ['with', 'a', 'as', 'b', ',', 'c', 'as', 'd', ':', '\n', '\t', 'something', '(', 'b', ',', 'd', ')', '\n']
+        self.assertListEqual(correct_list, analyze_with(child[0], 0))
+        # test_parse = ast.parse(" ".join(correct_list).replace("\n ", "\n"))
+
+    def test_with_stmt2(self):
+        tree = ast.parse(
+            """
+with open("test.txt", "r") as fileread:
+    print(fileread.read())  
+            """)
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.With)
+        correct_list = ['with', 'open', '(', "'", 'test.txt', "'", ',', "'", 'r', "'", ')', 'as', 'fileread', ':', '\n', '\t', 'print', '(', 'fileread', '.', 'read', '(', ')', ')', '\n']
+        self.assertListEqual(correct_list, analyze_with(child[0], 0))
+        # test_parse = ast.parse(" ".join(correct_list).replace("\n ", "\n"))

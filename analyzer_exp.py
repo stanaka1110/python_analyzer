@@ -199,7 +199,7 @@ def analyze_call(node):
     assert(isinstance(node, ast.Call))
     token_list = []
 
-    token_list.append(node.func.id)
+    token_list.extend(analyze_expr(node.func))
     token_list.append("(")
 
     arg_list = list(node.args)
@@ -222,16 +222,14 @@ def analyze_call(node):
             token_list.append(",")
             token_list.append(k.arg)
             token_list.append("=")
-            if isinstance(k.value, ast.Name):
-                token_list.extend(analyze_name(k.value))
-            elif isinstance(k.value, ast.Constant):
-                token_list.extend(analyze_constant(k.value))
+            token_list.extend(analyze_expr(k.value))
         else:
             token_list.extend(tmp_list)
             token_list.append(",")
             token_list.append("**")
-            token_list.append(k.value.id)
-    
+            token_list.append(analyze_expr(k.value))
+    if "**" not in token_list:
+        token_list.extend(tmp_list)
     token_list.append(")")
 
     return token_list
