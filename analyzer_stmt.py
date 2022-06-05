@@ -1,4 +1,5 @@
 import ast
+from lib2to3.pgen2 import token
 from lib2to3.pgen2.tokenize import TokenError
 from re import I
 from secrets import token_urlsafe
@@ -138,22 +139,50 @@ def analyze_aug_assign(node):
     return token_list
 
 def analyze_for(node, indent_level):
-    warnings.warn("for deprecation", DeprecationWarning)
     assert(isinstance(node, ast.For))
     token_list = []
     token_list.append("for")
     token_list.extend(analyze_expr(node.target))
     token_list.append("in")
     token_list.extend(analyze_expr(node.iter))
+    token_list.append(":")
+    token_list.append("\n")
     for b in node.body:
-        token_list.extend(analyze_expr(b))
-    
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
+    if len(node.orelse) != 0:
+        token_list.append("else")
+        token_list.append(":")
+        token_list.append("\n")
+        for o in node.orelse:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(o, indent_level+1))
+            token_list.append("\n")
     return token_list
 
 def analyze_async_for(node, indent_level):
-    warnings.warn("for_async deprecation", DeprecationWarning)
     assert(isinstance(node, ast.AsyncFor))
     token_list = []
+    token_list.append("async")
+    token_list.append("for")
+    token_list.extend(analyze_expr(node.target))
+    token_list.append("in")
+    token_list.extend(analyze_expr(node.iter))
+    token_list.append(":")
+    token_list.append("\n")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
+    if len(node.orelse) != 0:
+        token_list.append("else")
+        token_list.append(":")
+        token_list.append("\n")
+        for o in node.orelse:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(o, indent_level+1))
+            token_list.append("\n")
     return token_list
 
 def analyze_while(node, indent_level):
@@ -166,7 +195,41 @@ def analyze_if(node, indent_level):
     warnings.warn("if deprecation", DeprecationWarning)
     assert(isinstance(node, ast.If))
     token_list = []
+    token_list.append("if")
+    token_list.extend(analyze_expr(node.test))
+    token_list.append(":")
+    token_list.append("\n")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
+    if len(node.orelse) != 0:
+        token_list.extend(analyze_elif(node.orelse[0], indent_level))
+    return token_list
 
+def analyze_elif(node, indent_level):
+
+    token_list = []
+    if not isinstance(node, ast.If):
+        token_list.append("else")
+        token_list.append(":")
+        token_list.append("\n")
+        for o in node:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(o, indent_level+1))
+            token_list.append("\n")
+    else:
+        token_list.append("elif")
+        token_list.extend(analyze_expr(node.test))
+        token_list.append(":")
+        token_list.append("\n")
+        for b in node.body:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(b, indent_level+1))
+            token_list.append("\n")
+        if len(node.orelse) != 0:
+            token_list.extend(analyze_elif(node.orelse, indent_level))
+    
     return token_list
 
 def analyze_with(node, indent_level):

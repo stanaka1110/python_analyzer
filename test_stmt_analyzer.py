@@ -5,7 +5,7 @@ import unittest
 from analyzer_stmt import (analyze_ann_assign, analyze_assert, analyze_assign,
                            analyze_aug_assign, analyze_delete, analyze_global,
                            analyze_import, analyze_import_from,
-                           analyze_nonlocal, analyze_try, analyze_with)
+                           analyze_nonlocal, analyze_try, analyze_with, analyze_for, analyze_if)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -196,4 +196,57 @@ with open("test.txt", "r") as fileread:
         correct_list = ['with', 'open', '(', "'", 'test.txt', "'", ',', "'", 'r', "'", ')', 'as', 'fileread', ':', '\n', '\t', 'print', '(', 'fileread', '.', 'read', '(', ')', ')', '\n']
         self.assertListEqual(correct_list, analyze_with(child[0], 0))
         # test_parse = ast.parse(" ".join(correct_list).replace("\n ", "\n"))
-        
+    
+    def test_for_stmt1(self):
+        tree = ast.parse(
+            """
+for num in range(5):
+    print(num)
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.For)
+        correct_list = ['for', 'num', 'in', 'range', '(', '5', ')', ':', '\n', '\t', 'print', '(', 'num', ')', '\n']
+        self.assertListEqual(correct_list, analyze_for(child[0], 0))
+    
+    def test_if_stmt1(self):
+        tree = ast.parse(
+            """
+if old < 20:
+    print("not")
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.If)
+        correct_list = ['if', 'old', '<', '20', ':', '\n', '\t', 'print', '(', "'", 'not', "'", ')', '\n']
+        self.assertListEqual(correct_list, analyze_if(child[0], 0))
+
+    def test_if_stmt2(self):
+        tree = ast.parse(
+            """
+if old < 20:
+    print("not")
+else :
+    print("yes")
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.If)
+        correct_list = ['if', 'old', '<', '20', ':', '\n', '\t', 'print', '(', "'", 'not', "'", ')', '\n', 'else', ':', '\n', '\t', 'print', '(', "'", 'yes', "'", ')', '\n']
+        self.assertListEqual(correct_list, analyze_if(child[0], 0))
+
+    def test_if_stmt3(self):
+        tree = ast.parse(
+            """
+if old < 20:
+    print("not")
+elif old > 20:
+    print("yes")
+else :
+    print("no")
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.If)
+        correct_list = ['if', 'old', '<', '20', ':', '\n', '\t', 'print', '(', "'", 'not', "'", ')', '\n', 'elif', 'old', '>', '20', ':', '\n', '\t', 'print', '(', "'", 'yes', "'", ')', '\n', 'else', ':', '\n', 'print', '(', "'", 'no', "'", ')', '\n']
+        self.assertListEqual(correct_list, analyze_if(child[0], 0))
