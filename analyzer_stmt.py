@@ -1,51 +1,77 @@
 import ast
 from lib2to3.pgen2 import token
-from lib2to3.pgen2.tokenize import TokenError
-from re import I
-from secrets import token_urlsafe
 import warnings
 
 from analyzer_context import  analyze_alias, analyze_op
 from analyzer_exp import analyze_call, analyze_value, analyze_expr
-def analyze_function_def(node, indent_level=1):
-    warnings.warn("function_def deprecation", DeprecationWarning)
+def analyze_module(node, indent_level=0):
+    assert(isinstance(node, ast.Module))
+    token_list = []
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level))
+        token_list.extend(analyze_stmt(b, indent_level))
+        token_list.append("\n")
+    return token_list
+
+def analyze_arguments(node):
+    assert(isinstance(node, ast.arguments))
+    arg_list = list(node.args)
+    token_list = []
+
+    for idx, a in enumerate(arg_list):
+        if idx != 0:
+            token_list.append(",")
+        token_list.extend(analyze_arg(a))
+    return token_list
+
+def analyze_arg(node):
+    assert(isinstance(node, ast.arg))
+    token_list = []
+    token_list.append(node.arg)
+    return token_list
+
+def analyze_function_def(node, indent_level=0):
     assert(isinstance(node, ast.FunctionDef))
     token_list = []
     token_list.append("def")
     token_list.append(node.name)
 
     token_list.append("(")
-    args_list = node.args.args
-    if len(args_list) != 0:
-        token_list.append(args_list[0].arg)
-        for a in args_list[1:]:
-            token_list.append(",")
-            token_list.append(a.arg)
+    token_list.extend(analyze_arguments(node.args))
     token_list.append(")")
 
     token_list.append(":")
-
+    token_list.append("\n")
     body_list = list(node.body)
     for b in body_list:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
         token_list.append("\n")
-        for _ in range(indent_level):
-            token_list.append("\t")
-        
-        if isinstance(b, ast.For):
-            token_list.extend(analyze_for(b, indent_level+1))
-
-        if isinstance(b, ast.Return):
-            token_list.extend(analyze_return(b))
     
     return token_list
 
-def analyze_async_function_def(node, indent_level=1):
-    warnings.warn("async_function_def deprecation", DeprecationWarning)
+def analyze_async_function_def(node, indent_level=0):
     assert(isinstance(node, ast.AsyncFunctionDef))
     token_list = []
+    token_list.append("async")
+    token_list.append("def")
+    token_list.append(node.name)
+
+    token_list.append("(")
+    token_list.extend(analyze_arguments(node.args))
+    token_list.append(")")
+
+    token_list.append(":")
+    token_list.append("\n")
+    body_list = list(node.body)
+    for b in body_list:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
+    
     return token_list
 
-def analyze_class_def(node, indent_level=1):
+def analyze_class_def(node, indent_level=0):
     warnings.warn("class_def deprecation", DeprecationWarning)
     assert(isinstance(node, ast.ClassDef))
 
@@ -65,13 +91,11 @@ def analyze_class_def(node, indent_level=1):
     token_list.append(":")
 
     token_list.append("\n")
-    for _ in range(indent_level):
-        token_list.append("\t")
-
     body_list = list(node.body)
-    for body in body_list:
-        if isinstance(body, ast.FunctionDef):
-            token_list.extend(analyze_function_def(body, indent_level=indent_level+1))
+    for b in body_list:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
 
     return token_list
 
@@ -93,7 +117,6 @@ def analyze_delete(node):
 
     target_list = list(node.targets)
 
-    # 削除するターゲットがlist，nameの可能性
     for idx, t in enumerate(target_list):
         if idx != 0:
             token_list.append(",")
@@ -186,13 +209,27 @@ def analyze_async_for(node, indent_level):
     return token_list
 
 def analyze_while(node, indent_level):
-    warnings.warn("while deprecation", DeprecationWarning)
     assert(isinstance(node, ast.While))
     token_list = []
+    token_list.append("while")
+    token_list.extend(analyze_expr(node.test))
+    token_list.append(":")
+    token_list.append("\n")
+    for b in node.body:
+        token_list.extend(["\t"]*(indent_level+1))
+        token_list.extend(analyze_stmt(b, indent_level+1))
+        token_list.append("\n")
+    if len(node.orelse) != 0:
+        token_list.append("else")
+        token_list.append(":")
+        token_list.append("\n")
+        for o in node.orelse:
+            token_list.extend(["\t"]*(indent_level+1))
+            token_list.extend(analyze_stmt(o, indent_level+1))
+            token_list.append("\n")
     return token_list
 
 def analyze_if(node, indent_level):
-    warnings.warn("if deprecation", DeprecationWarning)
     assert(isinstance(node, ast.If))
     token_list = []
     token_list.append("if")
@@ -204,6 +241,7 @@ def analyze_if(node, indent_level):
         token_list.extend(analyze_stmt(b, indent_level+1))
         token_list.append("\n")
     if len(node.orelse) != 0:
+        token_list.extend(["\t"]*(indent_level))
         token_list.extend(analyze_elif(node.orelse[0], indent_level))
     return token_list
 
@@ -214,9 +252,14 @@ def analyze_elif(node, indent_level):
         token_list.append("else")
         token_list.append(":")
         token_list.append("\n")
-        for o in node:
+        if  not isinstance(node, ast.Expr):
+            for o in list(node):
+                token_list.extend(["\t"]*(indent_level+1))
+                token_list.extend(analyze_stmt(o, indent_level+1))
+                token_list.append("\n")
+        else:
             token_list.extend(["\t"]*(indent_level+1))
-            token_list.extend(analyze_stmt(o, indent_level+1))
+            token_list.extend(analyze_stmt(node, indent_level+1))
             token_list.append("\n")
     else:
         token_list.append("elif")
@@ -378,7 +421,11 @@ def analyze_global(node):
             token_list.append(",")
         token_list.append(n)
     return token_list
-
+def analyze_wait(node):
+    assert(isinstance(node, ast.Await))
+    token_list = []
+    token_list.append("await")
+    token_list.extend(analyze_exp(node.value))
 def analyze_nonlocal(node):
     token_list = []
     token_list.append("nonlocal")

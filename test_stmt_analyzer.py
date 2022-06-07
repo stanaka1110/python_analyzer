@@ -3,9 +3,9 @@ import os
 import unittest
 
 from analyzer_stmt import (analyze_ann_assign, analyze_assert, analyze_assign,
-                           analyze_aug_assign, analyze_delete, analyze_global,
+                           analyze_aug_assign, analyze_class_def, analyze_delete, analyze_function_def, analyze_global,
                            analyze_import, analyze_import_from,
-                           analyze_nonlocal, analyze_try, analyze_with, analyze_for, analyze_if)
+                           analyze_nonlocal, analyze_try, analyze_while, analyze_with, analyze_for, analyze_if)
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -248,5 +248,39 @@ else :
         )
         child = list(ast.iter_child_nodes(tree))
         self.assertIsInstance(child[0], ast.If)
-        correct_list = ['if', 'old', '<', '20', ':', '\n', '\t', 'print', '(', "'", 'not', "'", ')', '\n', 'elif', 'old', '>', '20', ':', '\n', '\t', 'print', '(', "'", 'yes', "'", ')', '\n', 'else', ':', '\n', 'print', '(', "'", 'no', "'", ')', '\n']
+        correct_list = ['if', 'old', '<', '20', ':', '\n', '\t', 'print', '(', "'", 'not', "'", ')', '\n', 'elif', 'old', '>', '20', ':', '\n', '\t', 'print', '(', "'", 'yes', "'", ')', '\n', 'else', ':', '\n', '\t', 'print', '(', "'", 'no', "'", ')', '\n']
         self.assertListEqual(correct_list, analyze_if(child[0], 0))
+
+    def test_while_stmt1(self):
+        tree = ast.parse(
+            """
+while num < 2:
+    print(str(num))
+    num += 1
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.While)
+        correct_list = ['while', 'num', '<', '2', ':', '\n', '\t', 'print', '(', 'str', '(', 'num', ')', ')', '\n', '\t', 'num', '+', '=', '1', '\n']
+        self.assertListEqual(correct_list, analyze_while(child[0], 0))
+    
+    def test_function_def_stmt1(self):
+        tree = ast.parse(
+            """
+def add(a, b):
+    x = a + b
+    return x
+            """
+        )
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.FunctionDef)
+        correct_list = ['def', 'add', '(', 'a',',', 'b', ')', ':', '\n', '\t', 'x', '=', 'a', '+', 'b', '\n', '\t', 'return', 'x', '\n']
+        self.assertListEqual(correct_list, analyze_function_def(child[0], 0))
+    
+    def test_class_def_stmt1(self):
+        with open('/workspaces/docker-python/python_analyzer/test_case/test2.py', 'rb') as f:
+            tree = ast.parse(f.read())
+        child = list(ast.iter_child_nodes(tree))
+        self.assertIsInstance(child[0], ast.ClassDef)
+        token_list = analyze_class_def(child[0], 0)
+        test_parse = ast.parse(" ".join(token_list).replace("\n ", "\n"))

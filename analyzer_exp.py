@@ -28,23 +28,22 @@ def analyze_named_expr(node):
     return token_list
 
 def analyze_bin_op(node):
-    warnings.warn("bin op deprecation", DeprecationWarning)
     assert(isinstance(node, ast.BinOp))
     child = list(ast.iter_child_nodes(node))
     token_list = []
     if isinstance(child[0], ast.BinOp):
         token_list.extend(analyze_bin_op(child[0]))
     else:
-        token_list.extend(analyze_value(node.left))
+        token_list.extend(analyze_expr(node.left))
     token_list.extend(analyze_op(node.op))
-    token_list.extend(analyze_value(node.right))
+    token_list.extend(analyze_expr(node.right))
     return token_list
 
 def analyze_unary_op(node):
     assert(isinstance(node, ast.UnaryOp))
     token_list = []
     token_list.extend(analyze_op(node.op))
-    token_list.extend(analyze_value(node.operand))
+    token_list.extend(analyze_expr(node.operand))
     return token_list
 
 def analyze_lambda(node):
@@ -139,6 +138,9 @@ def analyze_generator_exp(node):
     warnings.warn("generator exp deprecation", DeprecationWarning)
     assert(isinstance(node, ast.GeneratorExp))
     token_list = []
+    token_list.extend(analyze_expr(node.elt))
+    for g in node.generators:
+        token_list.extend(analyze_comprehension(g))
     return token_list
 
 def analyze_comprehension(node):
@@ -153,7 +155,7 @@ def analyze_comprehension(node):
     ifs_list = node.ifs
     for i in ifs_list:
         token_list.append("if")
-        token_list.extend(analyze_compare(i))
+        token_list.extend(analyze_expr(i))
 
     return token_list
 
@@ -187,10 +189,10 @@ def analyze_compare(node):
     comparators = node.comparators
 
     token_list = []
-    token_list.extend(analyze_value(left))
+    token_list.extend(analyze_expr(left))
     for o, c in zip(ops, comparators):
         token_list.extend(analyze_op(o))
-        token_list.extend(analyze_value(c))
+        token_list.extend(analyze_expr(c))
     
     return token_list
 
@@ -270,10 +272,7 @@ def analyze_constant(node):
 def analyze_attribute(node):
     assert(isinstance(node, ast.Attribute))
     token_list = []
-    if isinstance(node.value, ast.Name):
-        token_list.extend(analyze_name(node.value))
-    elif isinstance(node.value, ast.Attribute):
-        token_list.extend(analyze_attribute(node.value))
+    token_list.extend(analyze_expr(node.value))
     token_list.append(".")
     token_list.append(node.attr)
     return token_list
@@ -281,7 +280,7 @@ def analyze_attribute(node):
 def analyze_subscript(node):
     assert(isinstance(node, ast.Subscript))
     token_list = []
-    token_list.extend(analyze_name(node.value))
+    token_list.extend(analyze_expr(node.value))
     token_list.append("[")
     if isinstance(node.slice, ast.Index):
         slice_list = list(ast.iter_child_nodes(node.slice))
@@ -295,6 +294,8 @@ def analyze_subscript(node):
                 token_list.extend(analyze_tuple(s))
             elif isinstance(s, ast.Slice):
                 token_list.extend(analyze_slice(s))
+            else :
+                token_list.extend(analyze_expr(s))
     elif isinstance(node.slice, ast.Slice):
         token_list.extend(analyze_slice(node.slice))
     token_list.append("]")

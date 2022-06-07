@@ -13,19 +13,15 @@ def analyze_op(node):
     elif isinstance(node, ast.Div):
         token_list.append("/")
     elif isinstance(node, ast.FloorDiv):
-        token_list.append("/")
-        token_list.append("/")
+        token_list.append("//")
     elif isinstance(node, ast.Mod):
         token_list.append("%")
     elif isinstance(node, ast.Pow):
-        token_list.append("*")
-        token_list.append("*")
+        token_list.append("**")
     elif isinstance(node, ast.LShift):
-        token_list.append("<")
-        token_list.append("<")
+        token_list.append("<<")
     elif isinstance(node, ast.RShift):
-        token_list.append(">")
-        token_list.append(">")
+        token_list.append(">>")
     elif isinstance(node, ast.BitOr):
         token_list.append("|")
     elif isinstance(node, ast.BitXor):
@@ -47,21 +43,17 @@ def analyze_op(node):
     elif isinstance(node, ast.Invert):
         token_list.append("~")
     elif isinstance(node, ast.Eq):
-        token_list.append("=")
-        token_list.append("=")
+        token_list.append("==")
     elif isinstance(node, ast.NotEq):
-        token_list.append("!")
-        token_list.append("=")
+        token_list.append("!=")
     elif isinstance(node, ast.Lt):
         token_list.append("<")
     elif isinstance(node, ast.LtE):
-        token_list.append("<")
-        token_list.append("=")
+        token_list.append("<=")
     elif isinstance(node, ast.Gt):
         token_list.append(">")
     elif isinstance(node, ast.GtE):
-        token_list.append(">")
-        token_list.append("=")
+        token_list.append(">=")
     elif isinstance(node, ast.Is):
         token_list.append("is")
     elif isinstance(node, ast.IsNot):
