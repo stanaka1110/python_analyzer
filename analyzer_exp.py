@@ -138,9 +138,11 @@ def analyze_generator_exp(node):
     warnings.warn("generator exp deprecation", DeprecationWarning)
     assert(isinstance(node, ast.GeneratorExp))
     token_list = []
+    token_list.append("(")
     token_list.extend(analyze_expr(node.elt))
     for g in node.generators:
         token_list.extend(analyze_comprehension(g))
+    token_list.append(")")
     return token_list
 
 def analyze_comprehension(node):
@@ -229,7 +231,7 @@ def analyze_call(node):
             token_list.extend(tmp_list)
             token_list.append(",")
             token_list.append("**")
-            token_list.append(analyze_expr(k.value))
+            token_list.extend(analyze_expr(k.value))
     if "**" not in token_list:
         token_list.extend(tmp_list)
     token_list.append(")")
@@ -339,10 +341,7 @@ def analyze_tuple(node):
     for idx, e in enumerate(elts_list):
         if idx != 0:
             token_list.append(",")
-        if isinstance(e, ast.Constant):
-            token_list.extend(analyze_constant(e))
-        elif isinstance(e, ast.Name):
-            token_list.extend(analyze_name(e))
+        token_list.extend(analyze_expr(e))
         
     
     return token_list

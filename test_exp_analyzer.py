@@ -271,14 +271,14 @@ class TestExpAnalyzer(unittest.TestCase):
         child = list(ast.iter_child_nodes(tree))
         child = list(ast.iter_child_nodes(child[0]))
         self.assertIsInstance(child[0], ast.ListComp)
-        correct_list = ['[', 'i', '*', '*', '2', 'for', 'i', 'in', 'range', '(', '5', ')', ']']
+        correct_list = ['[', 'i', '**', '2', 'for', 'i', 'in', 'range', '(', '5', ')', ']']
         self.assertListEqual(correct_list, analyze_list_comp(child[0]))
     def test_compare_exp1(self):
         tree = ast.parse("1 <= a < 10")
         child = list(ast.iter_child_nodes(tree))
         child = list(ast.iter_child_nodes(child[0]))
         self.assertIsInstance(child[0], ast.Compare)
-        correct_list = ['1', '<', '=', 'a', '<', '10']
+        correct_list = ['1', '<=', 'a', '<', '10']
         self.assertListEqual(correct_list, analyze_compare(child[0]))
 
     def test_joined_str_and_fomrmatted_value_exp1(self):

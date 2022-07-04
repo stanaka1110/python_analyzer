@@ -2,16 +2,18 @@ import ast
 from lib2to3.pgen2 import token
 import warnings
 
-from analyzer_context import  analyze_alias, analyze_op
+from analyzer_context import analyze_alias, analyze_op
 from analyzer_exp import analyze_call, analyze_value, analyze_expr
+
+
 def analyze_module(node, indent_level=0):
     assert(isinstance(node, ast.Module))
     token_list = []
     for b in node.body:
         token_list.extend(["\t"]*(indent_level))
         token_list.extend(analyze_stmt(b, indent_level))
-        token_list.append("\n")
     return token_list
+
 
 def analyze_arguments(node):
     assert(isinstance(node, ast.arguments))
@@ -24,11 +26,13 @@ def analyze_arguments(node):
         token_list.extend(analyze_arg(a))
     return token_list
 
+
 def analyze_arg(node):
     assert(isinstance(node, ast.arg))
     token_list = []
     token_list.append(node.arg)
     return token_list
+
 
 def analyze_function_def(node, indent_level=0):
     assert(isinstance(node, ast.FunctionDef))
@@ -46,9 +50,10 @@ def analyze_function_def(node, indent_level=0):
     for b in body_list:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
-        token_list.append("\n")
     
+    token_list.append("\n")
     return token_list
+
 
 def analyze_async_function_def(node, indent_level=0):
     assert(isinstance(node, ast.AsyncFunctionDef))
@@ -68,8 +73,9 @@ def analyze_async_function_def(node, indent_level=0):
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
         token_list.append("\n")
-    
+
     return token_list
+
 
 def analyze_class_def(node, indent_level=0):
     warnings.warn("class_def deprecation", DeprecationWarning)
@@ -79,7 +85,7 @@ def analyze_class_def(node, indent_level=0):
 
     token_list.append("class")
     token_list.append(node.name)
-    
+
     if len(node.bases) != 0:
         token_list.append("(")
         token_list.append(node.bases[0].id)
@@ -87,7 +93,7 @@ def analyze_class_def(node, indent_level=0):
             token_list.append(",")
             token_list.append(base.id)
         token_list.append(")")
-    
+
     token_list.append(":")
 
     token_list.append("\n")
@@ -99,6 +105,7 @@ def analyze_class_def(node, indent_level=0):
 
     return token_list
 
+
 def analyze_return(node):
 
     assert(isinstance(node, ast.Return))
@@ -108,6 +115,7 @@ def analyze_return(node):
     token_list.extend(analyze_expr(node.value))
 
     return token_list
+
 
 def analyze_delete(node):
     assert(isinstance(node, ast.Delete))
@@ -121,7 +129,9 @@ def analyze_delete(node):
         if idx != 0:
             token_list.append(",")
         token_list.extend(analyze_expr(t))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_assign(node):
     assert(isinstance(node, ast.Assign))
@@ -135,8 +145,9 @@ def analyze_assign(node):
     token_list.append("=")
     value = node.value
     token_list.extend(analyze_expr(value))
-    
+    token_list.append("\n")
     return token_list
+
 
 def analyze_ann_assign(node):
     assert(isinstance(node, ast.AnnAssign))
@@ -146,20 +157,21 @@ def analyze_ann_assign(node):
     token_list.extend(analyze_value(target))
     token_list.append(":")
     token_list.extend(analyze_value(node.annotation))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_aug_assign(node):
     assert(isinstance(node, ast.AugAssign))
     token_list = []
     token_list.extend(analyze_value(node.target))
-    
-    token_list.extend(analyze_op(node.op))
-    token_list.append("=")
 
+    token_list.append(analyze_op(node.op)[0]+"+")
 
     token_list.extend(analyze_value(node.value))
-
+    token_list.append("\n")
     return token_list
+
 
 def analyze_for(node, indent_level):
     assert(isinstance(node, ast.For))
@@ -173,7 +185,6 @@ def analyze_for(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
-        token_list.append("\n")
     if len(node.orelse) != 0:
         token_list.append("else")
         token_list.append(":")
@@ -181,8 +192,10 @@ def analyze_for(node, indent_level):
         for o in node.orelse:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(o, indent_level+1))
-            token_list.append("\n")
+    
+    token_list.append("\n")
     return token_list
+
 
 def analyze_async_for(node, indent_level):
     assert(isinstance(node, ast.AsyncFor))
@@ -197,7 +210,6 @@ def analyze_async_for(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
-        token_list.append("\n")
     if len(node.orelse) != 0:
         token_list.append("else")
         token_list.append(":")
@@ -205,8 +217,9 @@ def analyze_async_for(node, indent_level):
         for o in node.orelse:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(o, indent_level+1))
-            token_list.append("\n")
+    token_list.append("\n")
     return token_list
+
 
 def analyze_while(node, indent_level):
     assert(isinstance(node, ast.While))
@@ -218,7 +231,6 @@ def analyze_while(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
-        token_list.append("\n")
     if len(node.orelse) != 0:
         token_list.append("else")
         token_list.append(":")
@@ -226,8 +238,9 @@ def analyze_while(node, indent_level):
         for o in node.orelse:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(o, indent_level+1))
-            token_list.append("\n")
+    token_list.append("\n")
     return token_list
+
 
 def analyze_if(node, indent_level):
     assert(isinstance(node, ast.If))
@@ -239,11 +252,11 @@ def analyze_if(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level+1))
-        token_list.append("\n")
     if len(node.orelse) != 0:
         token_list.extend(["\t"]*(indent_level))
         token_list.extend(analyze_elif(node.orelse[0], indent_level))
     return token_list
+
 
 def analyze_elif(node, indent_level):
 
@@ -252,15 +265,13 @@ def analyze_elif(node, indent_level):
         token_list.append("else")
         token_list.append(":")
         token_list.append("\n")
-        if  not isinstance(node, ast.Expr):
+        if not isinstance(node, ast.Expr):
             for o in list(node):
                 token_list.extend(["\t"]*(indent_level+1))
                 token_list.extend(analyze_stmt(o, indent_level+1))
-                token_list.append("\n")
         else:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(node, indent_level+1))
-            token_list.append("\n")
     else:
         token_list.append("elif")
         token_list.extend(analyze_expr(node.test))
@@ -269,11 +280,11 @@ def analyze_elif(node, indent_level):
         for b in node.body:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(b, indent_level+1))
-            token_list.append("\n")
         if len(node.orelse) != 0:
             token_list.extend(analyze_elif(node.orelse, indent_level))
-    
+    token_list.append("\n")
     return token_list
+
 
 def analyze_with(node, indent_level):
     assert(isinstance(node, ast.With))
@@ -290,9 +301,10 @@ def analyze_with(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level))
-        token_list.append("\n")
-    
+
+    token_list.append("\n")
     return token_list
+
 
 def analyze_async_with(node, indent_level):
     assert(isinstance(node, ast.AsyncWith))
@@ -310,9 +322,10 @@ def analyze_async_with(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level))
-        token_list.append("\n")
-    
+
+    token_list.append("\n")
     return token_list
+
 
 def analyze_raise(node):
     assert(isinstance(node, ast.Raise))
@@ -322,7 +335,9 @@ def analyze_raise(node):
     if node.cause != None:
         token_list.append("from")
         token_list.extend(analyze_expr(node.cause))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_try(node, indent_level):
     warnings.warn("try deprecation", DeprecationWarning)
@@ -337,29 +352,28 @@ def analyze_try(node, indent_level):
     token_list.append("\n")
     if len(node.handlers) != 0:
         for e in node.handlers:
-            token_list.extend(["\t"]*(indent_level)) 
+            token_list.extend(["\t"]*(indent_level))
             token_list.extend(analyze_except_handler(e, indent_level))
-    
+
     if len(node.orelse) != 0:
-        token_list.extend(["\t"]*(indent_level)) 
+        token_list.extend(["\t"]*(indent_level))
         token_list.append("else")
         token_list.append(":")
-        token_list.append("\n")
+
         for o in node.orelse:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(o, indent_level))
-            token_list.append("\n")
     if len(node.finalbody) != 0:
-        token_list.extend(["\t"]*(indent_level)) 
+        token_list.extend(["\t"]*(indent_level))
         token_list.append("finally")
         token_list.append(":")
         token_list.append("\n")
         for f in node.finalbody:
             token_list.extend(["\t"]*(indent_level+1))
             token_list.extend(analyze_stmt(f, indent_level))
-            token_list.append("\n")
-        
+    token_list.append("\n")
     return token_list
+
 
 def analyze_except_handler(node, indent_level):
     assert(isinstance(node, ast.ExceptHandler))
@@ -374,8 +388,9 @@ def analyze_except_handler(node, indent_level):
     for b in node.body:
         token_list.extend(["\t"]*(indent_level+1))
         token_list.extend(analyze_stmt(b, indent_level))
-        token_list.append("\n")
+    token_list.append("\n")
     return token_list
+
 
 def analyze_assert(node):
     assert(isinstance(node, ast.Assert))
@@ -385,8 +400,9 @@ def analyze_assert(node):
     if node.msg != None:
         token_list.append(",")
         token_list.extend(analyze_expr(node.msg))
-
+    token_list.append("\n")
     return token_list
+
 
 def analyze_import(node):
     assert(isinstance(node, ast.Import))
@@ -396,7 +412,9 @@ def analyze_import(node):
         if idx != 0:
             token_list.append(",")
         token_list.extend(analyze_alias(n))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_import_from(node):
     assert(isinstance(node, ast.ImportFrom))
@@ -410,7 +428,9 @@ def analyze_import_from(node):
         if idx != 0:
             token_list.append(",")
         token_list.extend(analyze_alias(n))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_global(node):
     assert(isinstance(node, ast.Global))
@@ -420,12 +440,18 @@ def analyze_global(node):
         if idx != 0:
             token_list.append(",")
         token_list.append(n)
+    token_list.append("\n")
     return token_list
+
+
 def analyze_wait(node):
     assert(isinstance(node, ast.Await))
     token_list = []
     token_list.append("await")
     token_list.extend(analyze_exp(node.value))
+    
+    return token_list
+
 def analyze_nonlocal(node):
     token_list = []
     token_list.append("nonlocal")
@@ -433,25 +459,32 @@ def analyze_nonlocal(node):
         if idx != 0:
             token_list.append(",")
         token_list.append(n)
+    token_list.append("\n")
     return token_list
+
 
 def analyze_pass(node):
     assert(isinstance(node, ast.Pass))
-    return ["pass"]
+    return ["pass", "\n"]
+
 
 def analyze_break(node):
     assert(isinstance(node, ast.Break))
-    return ["break"]
+    return ["break", "\n"]
+
 
 def analyze_continue(node):
     assert(isinstance(node, ast.Continue))
-    return ["continue"]
+    return ["continue", "\n"]
+
 
 def analyze_exp(node):
     assert(isinstance(node, ast.Expr))
     token_list = []
     token_list.extend(analyze_expr(node.value))
+    token_list.append("\n")
     return token_list
+
 
 def analyze_stmt(node, indent_level=1):
     token_list = []
@@ -506,5 +539,3 @@ def analyze_stmt(node, indent_level=1):
     elif isinstance(node, ast.Continue):
         token_list.extend(analyze_break(node))
     return token_list
-
-
