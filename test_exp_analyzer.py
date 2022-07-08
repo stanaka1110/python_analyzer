@@ -281,8 +281,7 @@ class TestExpAnalyzer(unittest.TestCase):
         correct_list = ['1', '<=', 'a', '<', '10']
         self.assertListEqual(correct_list, analyze_compare(child[0]))
 
-    def test_joined_str_and_fomrmatted_value_exp1(self):
-        tree = ast.parse("f\"sin({a}) is {sin(a):.3}\"")
+w        tree = ast.parse("f\"sin({a}) is {sin(a):.3}\"")
         child = list(ast.iter_child_nodes(tree))
         child = list(ast.iter_child_nodes(child[0]))
         self.assertIsInstance(child[0], ast.JoinedStr)
